@@ -116,7 +116,6 @@ export default function ExploreScreen() {
   );
 
   // --- HTML HARTĂ (LEAFLET) ---
-  // --- HTML HARTĂ (LEAFLET) ---
   const generateMapHTML = () => {
     const locationsJSON = JSON.stringify(filteredLocations);
     return `
