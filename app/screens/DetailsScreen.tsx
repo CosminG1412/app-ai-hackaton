@@ -110,16 +110,6 @@ export default function DetailsScreen() {
           {/* DESCRIERE */}
           <Text style={styles.sectionTitle}>Despre locație</Text>
           <Text style={styles.description}>{description}</Text>
-
-          {/* Facilități */}
-          <Text style={styles.sectionTitle}>Facilități</Text>
-          <View style={styles.featuresRow}>
-            {['Wi-Fi', 'Parcare', 'Vegan', 'Pet Friendly'].map((feat, index) => (
-              <View key={index} style={styles.featureChip}>
-                <Text style={styles.featureText}>{feat}</Text>
-              </View>
-            ))}
-          </View>
         </View>
       </ScrollView>
 
@@ -237,22 +227,6 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     lineHeight: 24,
     marginBottom: 24,
-  },
-  featuresRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  featureChip: {
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  featureText: {
-    color: '#374151',
-    fontSize: 14,
-    fontWeight: '500',
   },
   footer: {
     padding: 20,
