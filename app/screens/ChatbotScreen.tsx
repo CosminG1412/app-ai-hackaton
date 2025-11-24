@@ -20,6 +20,9 @@ import locationsData from './locatii.json';
 const LOCATIONS = locationsData;
 const { height } = Dimensions.get('window');
 
+// Culoarea principală de accent (din constants/theme.ts)
+const TINT_COLOR = '#0a7ea4'; 
+
 // 
 // 🚨 ATENȚIE: Aici se accesează cheia din Variabilele de Mediu (EXPO_PUBLIC_ prefix este necesar în Expo) 🚨
 //
@@ -251,7 +254,7 @@ export default function ChatbotScreen() { // Aici începe funcția
       item.sender === 'user' ? styles.userMessageContainer : styles.botMessageContainer,
     ]}>
       {item.sender === 'bot' && (
-         <Ionicons name="sparkles" size={20} color="#7C3AED" style={styles.botIcon} />
+         <Ionicons name="sparkles" size={20} color={TINT_COLOR} style={styles.botIcon} />
       )}
       {/* Aplică flex: 1 pentru ca messageContent să ocupe spațiul rămas, rezolvând problema de wrap */}
       <View style={[
@@ -260,7 +263,7 @@ export default function ChatbotScreen() { // Aici începe funcția
       ]}>
         <Text style={[
             styles.senderName, 
-            item.sender === 'user' && { color: '#FFF' }
+            item.sender === 'bot' ? { color: TINT_COLOR } : { color: '#FFF' }
         ]}>{item.sender === 'user' ? 'Eu' : BOT_NAME}</Text>
         <Text style={[
             styles.messageText, 
@@ -270,7 +273,7 @@ export default function ChatbotScreen() { // Aici începe funcția
         {/* LOGICĂ: Afișează butoane/link-uri pentru fiecare locație recomandată */}
         {item.sender === 'bot' && item.recommendedLocations && item.recommendedLocations.length > 0 && (
             <View style={styles.recommendedLinksContainer}>
-                <Text style={styles.recommendedLinksTitle}>Apasă pentru detalii:</Text>
+                <Text style={[styles.recommendedLinksTitle, { color: TINT_COLOR }]}>Apasă pentru detalii:</Text>
                 {item.recommendedLocations.map((loc, index) => (
                     <TouchableOpacity
                         key={index}
@@ -280,7 +283,7 @@ export default function ChatbotScreen() { // Aici începe funcția
                         <Text style={styles.detailsButtonText}>
                           {loc.name}
                         </Text>
-                        <Ionicons name="arrow-forward" size={14} color="#7C3AED" />
+                        <Ionicons name="arrow-forward" size={14} color={TINT_COLOR} />
                     </TouchableOpacity>
                 ))}
             </View>
@@ -373,7 +376,7 @@ const styles = StyleSheet.create({
   },
   userMessageContainer: {
     alignSelf: 'flex-end',
-    backgroundColor: '#111827',
+    backgroundColor: TINT_COLOR,
     borderRadius: 12, // Folosim borderRadius direct aici
     borderTopRightRadius: 0,
     marginLeft: 10, 
@@ -440,7 +443,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#7C3AED',
+    backgroundColor: TINT_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
   },

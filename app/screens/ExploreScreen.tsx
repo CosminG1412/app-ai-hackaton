@@ -24,6 +24,10 @@ import locationsData from './locatii.json';
 
 const { width } = Dimensions.get('window');
 
+// Culoarea principală de accent (din constants/theme.ts)
+const TINT_COLOR = '#0a7ea4'; 
+const TINT_COLOR_LIGHT_BG = '#E5F6F8'; // O variantă foarte deschisă
+
 // --- TIPURI DATE ---
 interface Coordinates {
   lat: number;
@@ -136,7 +140,7 @@ export default function ExploreScreen() {
           .custom-popup { text-align: center; }
           .custom-popup b { font-size: 15px; color: #111827; display: block; margin-bottom: 4px; }
           .custom-popup p { font-size: 13px; color: #6B7280; margin: 0; }
-          .cta-text { color: #7C3AED; font-size: 12px; font-weight: bold; margin-top: 6px !important; display: block; }
+          .cta-text { color: ${TINT_COLOR}; font-size: 12px; font-weight: bold; margin-top: 6px !important; display: block; }
         </style>
       </head>
       <body>
@@ -420,7 +424,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconButtonActive: {
-    backgroundColor: '#111827',
+    backgroundColor: TINT_COLOR,
   },
   toggleWrapper: {
     flexDirection: 'row',
@@ -438,7 +442,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   toggleBtnActive: {
-    backgroundColor: '#111827',
+    backgroundColor: TINT_COLOR,
   },
   contentContainer: {
     flex: 1,
@@ -566,15 +570,15 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   chipActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#111827',
+    backgroundColor: TINT_COLOR_LIGHT_BG,
+    borderColor: TINT_COLOR,
   },
   chipText: {
     color: '#4B5563',
     fontWeight: '500',
   },
   chipTextActive: {
-    color: '#111827',
+    color: TINT_COLOR,
     fontWeight: '700',
   },
   ratingOptions: {
@@ -593,7 +597,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   ratingChipActive: {
-    backgroundColor: '#111827',
+    backgroundColor: TINT_COLOR,
   },
   ratingChipText: {
     color: '#4B5563',
@@ -622,7 +626,7 @@ const styles = StyleSheet.create({
     flex: 2,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#111827',
+    backgroundColor: TINT_COLOR,
     alignItems: 'center',
   },
   applyButtonText: {

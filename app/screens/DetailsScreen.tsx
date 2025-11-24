@@ -11,7 +11,8 @@ import {
   Dimensions,
   Linking,
   ActivityIndicator,
-  Platform
+  Platform,
+  Share 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -106,6 +107,23 @@ export default function DetailsScreen() {
       alert('Asigură-te că ai WhatsApp instalat!');
     });
   };
+  
+  const handleShare = async () => {
+    try {
+      const result = await Share.share({
+        message: `Vă recomand locația: ${item.name} (${item.address}). Descriere: ${item.short_description}. Rating: ${item.rating}⭐.`,
+        title: `Descoperă Locația: ${item.name}`
+      });
+
+      if (result.action === Share.sharedAction) {
+        // Logica pentru succes (opțional)
+      } else if (result.action === Share.dismissedAction) {
+        // Logica pentru anulare (opțional)
+      }
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -120,7 +138,6 @@ export default function DetailsScreen() {
         {/* IMAGINE HERO */}
         <View style={styles.imageContainer}>
           <Image source={{ uri: item.image_url }} style={styles.image} />
-          {/* ELIMINAT: topOverlay și imageOverlay */}
         </View>
 
         <View style={styles.contentContainer}>
@@ -170,6 +187,20 @@ export default function DetailsScreen() {
         <Ionicons name="arrow-back" size={24} color="#FFF" />
       </TouchableOpacity>
 
+      {/* Butonul de Share fix, poziționat pe dreapta */}
+      <TouchableOpacity 
+        style={[
+          styles.fixedShareButton, 
+          { 
+            top: STATUS_BAR_HEIGHT + 10 
+          }
+        ]} 
+        onPress={handleShare}
+      >
+        <Ionicons name="share-social" size={24} color="#FFF" />
+      </TouchableOpacity>
+
+
       {/* BUTON FIX JOS - REZERVARE */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.reserveButton} onPress={handleReservation}>
@@ -201,12 +232,23 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  // ELIMINAT: Stilul topOverlay
   
   // Stil pentru butonul de back FIX (rămâne pentru a fi deasupra imaginii)
   fixedBackButton: {
     position: 'absolute',
     left: 20,
+    width: 40,
+    height: 40,
+    backgroundColor: 'rgba(0,0.0.0,0.5)',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  // Stilul pentru butonul de Share FIX
+  fixedShareButton: {
+    position: 'absolute',
+    right: 20, // Pozitionat pe dreapta
     width: 40,
     height: 40,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -215,7 +257,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  // ELIMINAT: Stilul imageOverlay
   
   contentContainer: {
     marginTop: -30,
@@ -255,15 +296,17 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginBottom: 20,
   },
+  // Culoarea butonului AI actualizată la #0a7ea4 (culoarea principală/tint a aplicației)
   aiButton: {
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#0a7ea4', 
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: 16,
     marginBottom: 24,
-    shadowColor: '#7C3AED',
+    // Umbra actualizată pentru a se potrivi cu noua culoare
+    shadowColor: '#0a7ea4', 
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
