@@ -19,7 +19,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 
-// Asigură-te că importul este corect
+// Asigură-te că importul este corect. 
 import locationsData from './locatii.json';
 
 const { width } = Dimensions.get('window');
@@ -57,8 +57,9 @@ export default function ExploreScreen() {
     LOCATIONS.forEach(loc => {
       const parts = loc.address.split(',');
       if (parts.length > 0) {
+        // Presupune că orașul este ultima parte după virgulă
         const city = parts[parts.length - 1].trim();
-        citiesSet.add(city);
+        if (city) citiesSet.add(city);
       }
     });
     return ['Toate', ...Array.from(citiesSet).sort()];
@@ -84,12 +85,10 @@ export default function ExploreScreen() {
     <TouchableOpacity 
       activeOpacity={0.9} 
       style={styles.card}
-      // AICI ESTE MODIFICAREA PRINCIPALĂ:
       onPress={() => {
         router.push({
           pathname: "/screens/DetailsScreen",
           // Trimitem obiectul 'item' convertit în text (JSON string)
-          // deoarece parametrii de navigare funcționează cel mai bine cu string-uri
           params: { item: JSON.stringify(item) } 
         });
       }}
@@ -97,7 +96,6 @@ export default function ExploreScreen() {
       <Image source={{ uri: item.image_url }} style={styles.cardImage} />
       
       <View style={styles.cardContent}>
-        {/* ... restul codului UI rămâne neschimbat ... */}
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
           <View style={styles.ratingContainer}>
@@ -118,6 +116,11 @@ export default function ExploreScreen() {
   // --- HTML HARTĂ (LEAFLET) ---
   const generateMapHTML = () => {
     const locationsJSON = JSON.stringify(filteredLocations);
+    
+    const centerLat = filteredLocations.length > 0 ? filteredLocations[0].coordinates.lat : 45.9432;
+    const centerLng = filteredLocations.length > 0 ? filteredLocations[0].coordinates.long : 24.9668;
+    const zoomLevel = filteredLocations.length > 0 ? 12 : 6;
+
     return `
       <!DOCTYPE html>
       <html>
@@ -139,9 +142,9 @@ export default function ExploreScreen() {
       <body>
         <div id="map"></div>
         <script>
-          var centerLat = ${filteredLocations.length > 0 ? filteredLocations[0].coordinates.lat : 45.9432};
-          var centerLng = ${filteredLocations.length > 0 ? filteredLocations[0].coordinates.long : 24.9668};
-          var zoomLevel = ${filteredLocations.length > 0 ? 12 : 6};
+          var centerLat = ${centerLat};
+          var centerLng = ${centerLng};
+          var zoomLevel = ${zoomLevel};
 
           var map = L.map('map', { zoomControl: false }).setView([centerLat, centerLng], zoomLevel);
           
@@ -189,32 +192,21 @@ export default function ExploreScreen() {
         source={{ html: generateMapHTML() }}
         style={styles.webview}
         scrollEnabled={false}
-        // **********************************************
-        // 🚨 HANDLER PENTRU MESAJUL DIN HARTĂ (HTML/JS)
-        // **********************************************
         onMessage={(event) => {
           try {
-            // event.nativeEvent.data conține string-ul JSON trimis din HTML
             const locationString = event.nativeEvent.data;
             
             if (locationString) {
-              // 🧪 PAS DE DEPANARE: Verifică în consolă dacă vezi acest mesaj!
-              console.log("Mesaj primit de la hartă (Location JSON):", locationString);
-
-              // Navigare către ecranul de detalii. Calea Expo Router trebuie să fie exactă.
+              // Navigare către ecranul de detalii
               router.push({
-                // Calea corectă bazată pe structura fisierului app/screens/DetailsScreen.tsx
                 pathname: "/screens/DetailsScreen", 
                 params: { item: locationString } 
               });
-            } else {
-                console.log("Mesaj gol primit de la hartă.");
             }
           } catch (error) {
-            console.error("Eroare critică la procesarea mesajului din hartă:", error);
+            console.error("Eroare la procesarea mesajului din hartă:", error);
           }
         }}
-        // **********************************************
       />
     </View>
   );
@@ -233,7 +225,7 @@ export default function ExploreScreen() {
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color="#9CA3AF" />
           <TextInput 
-            placeholder="Caută destinații..." 
+            placeholder="Caută" 
             placeholderTextColor="#9CA3AF"
             style={styles.searchInput}
             value={searchQuery}
@@ -288,15 +280,26 @@ export default function ExploreScreen() {
         )}
       </View>
 
-      {/* MODAL FILTRARE */}
+      {/* MODAL FILTRARE (CU FADE-IN ȘI ÎNCHIDERE LA APĂSAREA FUNDALULUI) */}
       <Modal
-        animationType="slide"
+        // 🚨 MODIFICAREA: Folosim 'fade' pentru o tranziție mai fină
+        animationType="fade"
         transparent={true}
         visible={isFilterVisible}
         onRequestClose={() => setIsFilterVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        {/* TouchableOpacity pentru a gestiona apăsarea fundalului */}
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1} 
+          onPress={() => setIsFilterVisible(false)} // Închide modalul la apăsarea fundalului
+        >
+          {/* View-ul de conținut care blochează propagarea evenimentului */}
+          <View 
+            style={styles.modalContent}
+            onStartShouldSetResponder={() => true} 
+            onResponderRelease={(e) => e.stopPropagation()} // Oprește închiderea la apăsarea conținutului
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Filtrează</Text>
               <TouchableOpacity onPress={() => setIsFilterVisible(false)}>
@@ -357,7 +360,7 @@ export default function ExploreScreen() {
             </View>
 
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
@@ -519,6 +522,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
+  // --- STILURI MODAL ---
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
