@@ -13,28 +13,47 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+// Importăm hook-urile necesare din expo-router
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-export default function DetailsScreen({ route, navigation }: any) {
-  // Primim datele. Dacă vin ca string (JSON), le convertim înapoi în obiect.
-  const params = route.params || {};
-  const item = typeof params.item === 'string' ? JSON.parse(params.item) : params.item;
+export default function DetailsScreen() {
+  // 1. Folosim hook-urile pentru navigare și parametri
+  const router = useRouter();
+  const params = useLocalSearchParams();
+
+  // 2. Parsăm datele primite. 
+  // useLocalSearchParams returnează string-uri sau array-uri de string-uri.
+  let item: any = {};
+  try {
+    if (params.item && typeof params.item === 'string') {
+      item = JSON.parse(params.item);
+    }
+  } catch (e) {
+    console.error("Eroare la parsarea datelor:", e);
+  }
+
+  // Dacă nu avem date (caz de eroare), afișăm un mesaj simplu sau o încărcare
+  if (!item || !item.name) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#7C3AED" style={{ marginTop: 50 }} />
+      </View>
+    );
+  }
 
   const [aiLoading, setAiLoading] = useState(false);
   const [description, setDescription] = useState(item.short_description);
 
-  // Funcție simulată pentru butonul AI (cerința din brief)
   const generateAiVibe = () => {
     setAiLoading(true);
-    // Aici vei pune apelul către API-ul tău AI mai târziu
     setTimeout(() => {
       setDescription("✨ Vibe Check: Un loc desprins parcă din povești, unde aroma de cafea dansează cu liniștea dimineții. Pereții șoptesc istorie, iar lumina cade perfect pentru următorul tău story. Ești gata să te pierzi în atmosferă?");
       setAiLoading(false);
     }, 2000);
   };
 
-  // Funcție pentru rezervare pe WhatsApp
   const handleReservation = () => {
     const message = `Salut! Vreau să fac o rezervare la ${item.name}.`;
     const url = `whatsapp://send?text=${message}`;
@@ -52,12 +71,11 @@ export default function DetailsScreen({ route, navigation }: any) {
         <View style={styles.imageContainer}>
           <Image source={{ uri: item.image_url }} style={styles.image} />
           
-          {/* Buton Back */}
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          {/* 3. Folosim router.back() pentru navigare înapoi */}
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#FFF" />
           </TouchableOpacity>
 
-          {/* Overlay Gradient */}
           <View style={styles.imageOverlay} />
         </View>
 
@@ -93,7 +111,7 @@ export default function DetailsScreen({ route, navigation }: any) {
           <Text style={styles.sectionTitle}>Despre locație</Text>
           <Text style={styles.description}>{description}</Text>
 
-          {/* Facilități (Hardcoded pentru aspect vizual) */}
+          {/* Facilități */}
           <Text style={styles.sectionTitle}>Facilități</Text>
           <View style={styles.featuresRow}>
             {['Wi-Fi', 'Parcare', 'Vegan', 'Pet Friendly'].map((feat, index) => (
@@ -133,7 +151,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 50,
+    top: 50, // Ajustat pentru siguranță pe iOS
     left: 20,
     width: 40,
     height: 40,
@@ -149,10 +167,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 100,
-    backgroundColor: 'rgba(0,0,0,0.4)', // Gradient fake
+    backgroundColor: 'rgba(0,0,0,0.4)', 
   },
   contentContainer: {
-    marginTop: -30, // Suprapunere peste poză
+    marginTop: -30,
     backgroundColor: '#FFF',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -190,7 +208,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   aiButton: {
-    backgroundColor: '#7C3AED', // Violet modern pentru AI
+    backgroundColor: '#7C3AED',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -243,7 +261,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   reserveButton: {
-    backgroundColor: '#25D366', // WhatsApp Green
+    backgroundColor: '#25D366',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
