@@ -18,13 +18,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
+// Accesăm cheia API și aici
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY; 
+
 export default function DetailsScreen() {
   // 1. Folosim hook-urile pentru navigare și parametri
   const router = useRouter();
   const params = useLocalSearchParams();
 
   // 2. Parsăm datele primite. 
-  // useLocalSearchParams returnează string-uri sau array-uri de string-uri.
   let item: any = {};
   try {
     if (params.item && typeof params.item === 'string') {
@@ -46,12 +48,62 @@ export default function DetailsScreen() {
   const [aiLoading, setAiLoading] = useState(false);
   const [description, setDescription] = useState(item.short_description);
 
-  const generateAiVibe = () => {
+  // CORECTIE: Funcția este acum asincronă și face apelul LLM real
+  const generateAiVibe = async () => { 
+    if (aiLoading) return;
     setAiLoading(true);
-    setTimeout(() => {
-      setDescription("✨ Vibe Check: Un loc desprins parcă din povești, unde aroma de cafea dansează cu liniștea dimineții. Pereții șoptesc istorie, iar lumina cade perfect pentru următorul tău story. Ești gata să te pierzi în atmosferă?");
-      setAiLoading(false);
-    }, 2000);
+
+    if (!GEMINI_API_KEY) {
+        setDescription("Eroare LLM: Cheia API nu este disponibilă pentru a genera Vibe Check.");
+        setAiLoading(false);
+        return;
+    }
+    
+    // Pregătim prompt-ul LLM
+    const userPrompt = `Ești un expert în marketing turistic. Generează un scurt "Vibe Check" (maxim 2 fraze, inspirational, cu 1-2 emoji) pentru această locație. Detalii: Nume: ${item.name}, Rating: ${item.rating}, Descriere: ${item.short_description}`;
+    
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            // CORECTAT: A fost eliminat câmpul systemInstruction
+            generationConfig: {
+                temperature: 0.8, 
+            },
+          }),
+        });
+    
+        const data = await response.json();
+        
+        // --- VERIFICARE 1: ERORI HTTP/API ---
+        if (!response.ok) {
+            const errorMessage = data?.error?.message || `Eroare HTTP necunoscută: ${response.status} ${response.statusText}`;
+            console.error("API Error:", data);
+            setDescription(`Eroare API (${response.status}): ${errorMessage}.`);
+            return;
+        }
+
+        // Extragem textul generat
+        const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        // --- VERIFICARE 2: RĂSPUNS GOL ---
+        if (!generatedText) {
+            setDescription("LLM-ul nu a putut genera o descriere. Conținutul ar fi putut fi blocat din motive de siguranță.");
+            return;
+        }
+
+        setDescription(generatedText);
+
+    } catch (error) {
+        console.error("Eroare la generarea LLM Vibe:", error);
+        setDescription("A apărut o eroare la conexiunea cu serverul AI. Vă rugăm să verificați rețeaua.");
+    } finally {
+        setAiLoading(false);
+    }
   };
 
   const handleReservation = () => {
@@ -116,7 +168,7 @@ export default function DetailsScreen() {
       {/* BUTON FIX JOS - REZERVARE */}
       <SafeAreaView style={styles.footer}>
         <TouchableOpacity style={styles.reserveButton} onPress={handleReservation}>
-          <Ionicons name="logo-whatsapp" size={24} color="#FFF" style={{ marginRight: 10 }} />
+          <Ionicons name="logo-whatsapp" size={24} color="#25D366" style={{ marginRight: 10 }} />
           <Text style={styles.reserveButtonText}>Rezervă Acum</Text>
         </TouchableOpacity>
       </SafeAreaView>
