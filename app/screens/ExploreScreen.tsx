@@ -1,4 +1,4 @@
-
+import { router } from 'expo-router';
 
 import React, { useState, useMemo } from 'react';
 import { 
@@ -80,13 +80,24 @@ export default function ExploreScreen() {
     return matchesSearch && matchesCity && matchesRating;
   });
 
-  // --- RENDERIZARE LISTĂ (CU DESCRIERE REINTRA-DUSĂ) ---
-  const renderListItem = ({ item }: { item: TouristLocation }) => (
-    <TouchableOpacity activeOpacity={0.9} style={styles.card}>
+ const renderListItem = ({ item }: { item: TouristLocation }) => (
+    <TouchableOpacity 
+      activeOpacity={0.9} 
+      style={styles.card}
+      // AICI ESTE MODIFICAREA PRINCIPALĂ:
+      onPress={() => {
+        router.push({
+          pathname: "/screens/DetailsScreen",
+          // Trimitem obiectul 'item' convertit în text (JSON string)
+          // deoarece parametrii de navigare funcționează cel mai bine cu string-uri
+          params: { item: JSON.stringify(item) } 
+        });
+      }}
+    >
       <Image source={{ uri: item.image_url }} style={styles.cardImage} />
       
       <View style={styles.cardContent}>
-        {/* Header: Titlu + Rating */}
+        {/* ... restul codului UI rămâne neschimbat ... */}
         <View style={styles.cardHeaderRow}>
           <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
           <View style={styles.ratingContainer}>
@@ -95,10 +106,8 @@ export default function ExploreScreen() {
           </View>
         </View>
 
-        {/* Adresa */}
         <Text style={styles.cardAddress}>📍 {item.address}</Text>
 
-        {/* DESCRIEREA (Adăugată înapoi) */}
         <Text style={styles.cardDesc} numberOfLines={2}>
           {item.short_description}
         </Text>

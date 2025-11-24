@@ -17,8 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 const { width } = Dimensions.get('window');
 
 export default function DetailsScreen({ route, navigation }: any) {
-  // Primim datele locației prin parametrii rutei
-  const { item } = route.params;
+  // Primim datele. Dacă vin ca string (JSON), le convertim înapoi în obiect.
+  const params = route.params || {};
+  const item = typeof params.item === 'string' ? JSON.parse(params.item) : params.item;
 
   const [aiLoading, setAiLoading] = useState(false);
   const [description, setDescription] = useState(item.short_description);
