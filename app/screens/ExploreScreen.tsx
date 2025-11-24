@@ -116,6 +116,7 @@ export default function ExploreScreen() {
   );
 
   // --- HTML HARTĂ (LEAFLET) ---
+  // --- HTML HARTĂ (LEAFLET) ---
   const generateMapHTML = () => {
     const locationsJSON = JSON.stringify(filteredLocations);
     return `
@@ -128,9 +129,12 @@ export default function ExploreScreen() {
         <style>
           body { margin: 0; padding: 0; }
           #map { width: 100%; height: 100vh; }
-          .leaflet-popup-content-wrapper { border-radius: 12px; font-family: -apple-system, sans-serif; }
-          .leaflet-popup-content b { font-size: 14px; color: #111827; }
-          .leaflet-popup-content p { font-size: 12px; color: #6B7280; margin: 4px 0 0 0; }
+          /* Stiluri pentru popup pentru a arăta că este interactiv */
+          .leaflet-popup-content-wrapper { border-radius: 12px; font-family: -apple-system, sans-serif; cursor: pointer; }
+          .custom-popup { text-align: center; }
+          .custom-popup b { font-size: 15px; color: #111827; display: block; margin-bottom: 4px; }
+          .custom-popup p { font-size: 13px; color: #6B7280; margin: 0; }
+          .cta-text { color: #7C3AED; font-size: 12px; font-weight: bold; margin-top: 6px !important; display: block; }
         </style>
       </head>
       <body>
@@ -149,11 +153,27 @@ export default function ExploreScreen() {
           }).addTo(map);
 
           var locations = ${locationsJSON};
-          locations.forEach(function(loc) {
+          
+          // Funcție pentru a trimite datele către React Native
+          function handlePopupClick(index) {
+            if (window.ReactNativeWebView) {
+              // Trimitem obiectul locației ca string JSON
+              window.ReactNativeWebView.postMessage(JSON.stringify(locations[index]));
+            }
+          }
+
+          locations.forEach(function(loc, index) {
             if(loc.coordinates && loc.coordinates.lat && loc.coordinates.long) {
+              // Creăm conținut HTML cu onclick
+              var content = '<div class="custom-popup" onclick="handlePopupClick(' + index + ')">' + 
+                            '<b>' + loc.name + '</b>' + 
+                            '<p>⭐ ' + loc.rating + '</p>' +
+                            '<span class="cta-text">Vezi detalii &rarr;</span>' +
+                            '</div>';
+
               L.marker([loc.coordinates.lat, loc.coordinates.long])
                 .addTo(map)
-                .bindPopup("<b>" + loc.name + "</b><p>⭐ " + loc.rating + "</p>");
+                .bindPopup(content);
             }
           });
         </script>
@@ -170,6 +190,32 @@ export default function ExploreScreen() {
         source={{ html: generateMapHTML() }}
         style={styles.webview}
         scrollEnabled={false}
+        // **********************************************
+        // 🚨 HANDLER PENTRU MESAJUL DIN HARTĂ (HTML/JS)
+        // **********************************************
+        onMessage={(event) => {
+          try {
+            // event.nativeEvent.data conține string-ul JSON trimis din HTML
+            const locationString = event.nativeEvent.data;
+            
+            if (locationString) {
+              // 🧪 PAS DE DEPANARE: Verifică în consolă dacă vezi acest mesaj!
+              console.log("Mesaj primit de la hartă (Location JSON):", locationString);
+
+              // Navigare către ecranul de detalii. Calea Expo Router trebuie să fie exactă.
+              router.push({
+                // Calea corectă bazată pe structura fisierului app/screens/DetailsScreen.tsx
+                pathname: "/screens/DetailsScreen", 
+                params: { item: locationString } 
+              });
+            } else {
+                console.log("Mesaj gol primit de la hartă.");
+            }
+          } catch (error) {
+            console.error("Eroare critică la procesarea mesajului din hartă:", error);
+          }
+        }}
+        // **********************************************
       />
     </View>
   );
