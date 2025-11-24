@@ -218,5 +218,192 @@
     "image_url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
     "short_description": "Minimalist design, specialty coffee, and relaxing background music.",
     "rating": 4.7
+  },
+  {
+    "name": "Folkloric Restaurant 'The Hearth'",
+    "address": "Strada Sforii, Nr. 1, Brașov",
+    "coordinates": {
+      "lat": 45.6416,
+      "long": 25.5866
+    },
+    "image_url": "https://images.unsplash.com/photo-1465101162946-4377e57745c3",
+    "short_description": "Rustic, traditional food with a view near the Black Church.",
+    "rating": 4.7
+  },
+  {
+    "name": "Sushi Bar 'Maki'",
+    "address": "Bulevardul Dacia, Nr. 50, București",
+    "coordinates": {
+      "lat": 44.4440,
+      "long": 26.1090
+    },
+    "image_url": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
+    "short_description": "Fresh sushi and sashimi, modern setting. Great lunch deals.",
+    "rating": 4.5
+  },
+  {
+    "name": "Tavern 'Poseidon'",
+    "address": "Strada Portului, Nr. 10, Constanța",
+    "coordinates": {
+      "lat": 44.1750,
+      "long": 28.6350
+    },
+    "image_url": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e",
+    "short_description": "Authentic Greek cuisine right on the shore.",
+    "rating": 4.6
+  },
+  {
+    "name": "Juice Bar 'Vitamin C'",
+    "address": "Piața Victoriei, Nr. 1, Timișoara",
+    "coordinates": {
+      "lat": 45.7551,
+      "long": 21.2289
+    },
+    "image_url": "https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f",
+    "short_description": "Cold-pressed juices and healthy wraps. Central location.",
+    "rating": 4.2
+  },
+  {
+    "name": "Steakhouse 'The Butcher'",
+    "address": "Calea Florești, Nr. 100, Cluj-Napoca",
+    "coordinates": {
+      "lat": 46.7600,
+      "long": 23.5600
+    },
+    "image_url": "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+    "short_description": "Prime beef cuts and an impressive wine list. High-end experience.",
+    "rating": 4.9
+  },
+  {
+    "name": "Bakery-Café 'Sweet Spot'",
+    "address": "Strada Unirii, Nr. 30, Iași",
+    "coordinates": {
+      "lat": 47.1580,
+      "long": 27.5750
+    },
+    "image_url": "https://images.unsplash.com/photo-1435224654926-ecc9f7fa028c",
+    "short_description": "Artisan pastries and excellent specialty coffee. Great morning vibe.",
+    "rating": 4.8
+  },
+  {
+    "name": "Sports Bar 'Goal'",
+    "address": "Bulevardul Mihai Viteazu, Nr. 5, Craiova",
+    "coordinates": {
+      "lat": 44.3310,
+      "long": 23.8050
+    },
+    "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+    "short_description": "Large screens for matches, beer on tap, and pub food.",
+    "rating": 4.1
+  },
+  {
+    "name": "Mexican Grill 'El Fuego'",
+    "address": "Strada Vămii, Nr. 15, Galați",
+    "coordinates": {
+      "lat": 45.4390,
+      "long": 28.0570
+    },
+    "image_url": "https://images.unsplash.com/photo-1505483531331-fc3cf89fd382",
+    "short_description": "Authentic tacos and spicy margaritas. Lively atmosphere.",
+    "rating": 4.3
+  },
+  {
+    "name": "Pancake House 'Fluffy'",
+    "address": "Bulevardul Independenței, Nr. 20, Ploiești",
+    "coordinates": {
+      "lat": 44.9350,
+      "long": 26.0300
+    },
+    "image_url": "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
+    "short_description": "Sweet and savory American-style pancakes. Perfect for a cheat day.",
+    "rating": 4.4
+  },
+  {
+    "name": "Winery & Bistro 'Vineyard'",
+    "address": "Calea Moților, Nr. 2, Alba Iulia",
+    "coordinates": {
+      "lat": 46.0710,
+      "long": 23.5780
+    },
+    "image_url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
+    "short_description": "Local wines and gourmet cheeses, cozy setting in the Citadel.",
+    "rating": 4.8
+  },
+  {
+    "name": "Ice Cream Parlor 'Gelateria'",
+    "address": "Piața Mare, Nr. 10, Sibiu",
+    "coordinates": {
+      "lat": 45.7970,
+      "long": 24.1530
+    },
+    "image_url": "https://images.unsplash.com/photo-1500534623283-312aade485b7",
+    "short_description": "Homemade Italian ice cream and unique seasonal flavors.",
+    "rating": 4.7
+  },
+  {
+    "name": "Tapas Bar 'Hola'",
+    "address": "Strada Lipscani, Nr. 50, București",
+    "coordinates": {
+      "lat": 44.4330,
+      "long": 26.1020
+    },
+    "image_url": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
+    "short_description": "Spanish tapas and sangria. Great for evening gatherings.",
+    "rating": 4.5
+  },
+  {
+    "name": "Pho and Rolls",
+    "address": "Bulevardul Titulescu, Nr. 10, Oradea",
+    "coordinates": {
+      "lat": 47.0540,
+      "long": 21.9200
+    },
+    "image_url": "https://images.unsplash.com/photo-1505483531331-fc3cf89fd382",
+    "short_description": "Delicious Vietnamese pho and fresh spring rolls.",
+    "rating": 4.4
+  },
+  {
+    "name": "Club/Lounge 'SkyView'",
+    "address": "Calea Victoriei, Nr. 100, București",
+    "coordinates": {
+      "lat": 44.4390,
+      "long": 26.0970
+    },
+    "image_url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+    "short_description": "Cocktails and panoramic view of the city.",
+    "rating": 4.6
+  },
+  {
+    "name": "Tea & Hookah 'Cloud Nine'",
+    "address": "Strada Vasile Goldiș, Nr. 5, Târgu Mureș",
+    "coordinates": {
+      "lat": 46.5465,
+      "long": 24.5630
+    },
+    "image_url": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e",
+    "short_description": "Exotic tea selection and relaxing ambiance.",
+    "rating": 4.1
+  },
+  {
+    "name": "Craft Beer Pub 'The Hop'",
+    "address": "Strada Popa Șapcă, Nr. 2, Timișoara",
+    "coordinates": {
+      "lat": 45.7500,
+      "long": 21.2200
+    },
+    "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+    "short_description": "Rotating selection of local and international craft beers.",
+    "rating": 4.6
+  },
+  {
+    "name": "Fine Dining 'Elegance'",
+    "address": "Bulevardul Eroilor, Nr. 20, Cluj-Napoca",
+    "coordinates": {
+      "lat": 46.7720,
+      "long": 23.5950
+    },
+    "image_url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
+    "short_description": "Modern European cuisine, ideal for special occasions.",
+    "rating": 5.0
   }
 ]

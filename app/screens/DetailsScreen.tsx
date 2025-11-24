@@ -10,23 +10,23 @@ import {
   StatusBar,
   Dimensions,
   Linking,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// Importăm hook-urile necesare din expo-router
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-// Accesăm cheia API și aici
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY; 
 
+// Reintroducem calculul pentru înălțimea barei de stare pentru poziționare
+const STATUS_BAR_HEIGHT = StatusBar.currentHeight || (Platform.OS === 'ios' ? 44 : 24); 
+
 export default function DetailsScreen() {
-  // 1. Folosim hook-urile pentru navigare și parametri
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  // 2. Parsăm datele primite. 
   let item: any = {};
   try {
     if (params.item && typeof params.item === 'string') {
@@ -36,7 +36,6 @@ export default function DetailsScreen() {
     console.error("Eroare la parsarea datelor:", e);
   }
 
-  // Dacă nu avem date (caz de eroare), afișăm un mesaj simplu sau o încărcare
   if (!item || !item.name) {
     return (
       <View style={styles.container}>
@@ -48,7 +47,6 @@ export default function DetailsScreen() {
   const [aiLoading, setAiLoading] = useState(false);
   const [description, setDescription] = useState(item.short_description);
 
-  // CORECTIE: Funcția este acum asincronă și face apelul LLM real
   const generateAiVibe = async () => { 
     if (aiLoading) return;
     setAiLoading(true);
@@ -59,7 +57,6 @@ export default function DetailsScreen() {
         return;
     }
     
-    // Pregătim prompt-ul LLM
     const userPrompt = `Ești un expert în marketing turistic. Generează un scurt "Vibe Check" (maxim 2 fraze, inspirational, cu 1-2 emoji) pentru această locație. Detalii: Nume: ${item.name}, Rating: ${item.rating}, Descriere: ${item.short_description}`;
     
     try {
@@ -70,7 +67,6 @@ export default function DetailsScreen() {
           },
           body: JSON.stringify({
             contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-            // CORECTAT: A fost eliminat câmpul systemInstruction
             generationConfig: {
                 temperature: 0.8, 
             },
@@ -79,7 +75,6 @@ export default function DetailsScreen() {
     
         const data = await response.json();
         
-        // --- VERIFICARE 1: ERORI HTTP/API ---
         if (!response.ok) {
             const errorMessage = data?.error?.message || `Eroare HTTP necunoscută: ${response.status} ${response.statusText}`;
             console.error("API Error:", data);
@@ -87,10 +82,8 @@ export default function DetailsScreen() {
             return;
         }
 
-        // Extragem textul generat
         const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
-        // --- VERIFICARE 2: RĂSPUNS GOL ---
         if (!generatedText) {
             setDescription("LLM-ul nu a putut genera o descriere. Conținutul ar fi putut fi blocat din motive de siguranță.");
             return;
@@ -115,20 +108,19 @@ export default function DetailsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <SafeAreaView style={styles.safeArea}>
+      {/* Status Bar: Transparent și text alb. ATENȚIE: Textul se poate pierde pe imagini deschise. */}
+      <StatusBar 
+        barStyle="light-content" 
+        translucent={true} 
+        backgroundColor="transparent"
+      />
       
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* IMAGINE HERO */}
         <View style={styles.imageContainer}>
           <Image source={{ uri: item.image_url }} style={styles.image} />
-          
-          {/* 3. Folosim router.back() pentru navigare înapoi */}
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#FFF" />
-          </TouchableOpacity>
-
-          <View style={styles.imageOverlay} />
+          {/* ELIMINAT: topOverlay și imageOverlay */}
         </View>
 
         <View style={styles.contentContainer}>
@@ -165,18 +157,35 @@ export default function DetailsScreen() {
         </View>
       </ScrollView>
 
+      {/* Butonul de back fix, poziționat sub Status Bar */}
+      <TouchableOpacity 
+        style={[
+          styles.fixedBackButton, 
+          { 
+            top: STATUS_BAR_HEIGHT + 10 
+          }
+        ]} 
+        onPress={() => router.back()}
+      >
+        <Ionicons name="arrow-back" size={24} color="#FFF" />
+      </TouchableOpacity>
+
       {/* BUTON FIX JOS - REZERVARE */}
-      <SafeAreaView style={styles.footer}>
+      <View style={styles.footer}>
         <TouchableOpacity style={styles.reserveButton} onPress={handleReservation}>
-          <Ionicons name="logo-whatsapp" size={24} color="#25D366" style={{ marginRight: 10 }} />
+          <Ionicons name="logo-whatsapp" size={24} color="#FFF" style={{ marginRight: 10 }} />
           <Text style={styles.reserveButtonText}>Rezervă Acum</Text>
         </TouchableOpacity>
-      </SafeAreaView>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFF',
@@ -185,15 +194,18 @@ const styles = StyleSheet.create({
     width: width,
     height: 350,
     position: 'relative',
+    // Imaginea începe de sus
   },
   image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
-  backButton: {
+  // ELIMINAT: Stilul topOverlay
+  
+  // Stil pentru butonul de back FIX (rămâne pentru a fi deasupra imaginii)
+  fixedBackButton: {
     position: 'absolute',
-    top: 50, // Ajustat pentru siguranță pe iOS
     left: 20,
     width: 40,
     height: 40,
@@ -203,14 +215,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  imageOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: 'rgba(0,0,0,0.4)', 
-  },
+  // ELIMINAT: Stilul imageOverlay
+  
   contentContainer: {
     marginTop: -30,
     backgroundColor: '#FFF',
@@ -281,7 +287,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   footer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 20, 
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
     backgroundColor: '#FFF',
