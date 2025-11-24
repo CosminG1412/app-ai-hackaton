@@ -20,7 +20,7 @@ export default function TabsLayout() {
         }}
     >
       <Tabs.Screen
-        name="index" // Poziția 1: Explore
+        name="index" // Poziția 1: ExploreScreen (index.tsx)
         options={{
           title: "Explore",
           tabBarIcon: ({ color, size }) => (
@@ -28,9 +28,9 @@ export default function TabsLayout() {
           ),
         }}
       />
-      {/* Tab-ul "chatbot" este acum în mijloc (poziția 2) */}
+      {/* Tab-ul "chatbot" este deja în mijloc (poziția 2) */}
       <Tabs.Screen
-        name="chatbot"
+        name="chatbot" // Poziția 2: ChatbotScreen (chatbox.tsx)
         options={{
           title: "Asistent AI",
           tabBarIcon: ({ color, size }) => (
@@ -39,7 +39,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore" // Poziția 3: Profile
+        name="profile" // Poziția 3: ProfileScreen (profile.tsx)
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
