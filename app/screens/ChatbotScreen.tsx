@@ -12,6 +12,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router'; 
 
 // Importăm datele despre locații
 import locationsData from './locatii.json';
@@ -20,68 +21,159 @@ const LOCATIONS = locationsData;
 const { height } = Dimensions.get('window');
 
 // --- TIPURI DATE ---
+interface Coordinates {
+  lat: number;
+  long: number;
+}
+
+interface TouristLocation {
+  name: string;
+  address: string;
+  coordinates: Coordinates;
+  image_url: string;
+  short_description: string;
+  rating: number;
+}
+
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'bot';
   timestamp: string;
+  recommendedLocations?: TouristLocation[]; 
 }
 
 const BOT_NAME = 'Asistent AI';
 
-// --- LOGICĂ SIMULARE AI ---
-const generateBotResponse = (query: string, locations: typeof LOCATIONS): string => {
-  const lowerQuery = query.toLowerCase();
+// Tipul de return pentru funcția de logică a bot-ului
+interface BotResponse {
+    text: string;
+    locations?: TouristLocation[];
+}
 
-  // 1. Căutare după tip de locație (Cafea/Ceai)
-  if (lowerQuery.includes('cafea') || lowerQuery.includes('coffee') || lowerQuery.includes('ceai')) {
+// Functie helper pentru a elimina diacriticele și a converti la litere mici
+const normalizeString = (str: string): string => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .replace(/ă/g, 'a')
+    .replace(/â/g, 'a')
+    .replace(/î/g, 'i')
+    .replace(/ș/g, 's')
+    .replace(/ţ/g, 't')
+    .replace(/ț/g, 't');
+};
+
+// --- LOGICĂ NOUĂ: EXTRAGEREA DINAMICĂ A ORAȘELOR ---
+const extractCities = (locations: typeof LOCATIONS): string[] => {
+  const citiesSet = new Set<string>();
+  locations.forEach(loc => {
+    // Orașul este ultimul element din adresa separată prin virgulă
+    const parts = loc.address.split(',');
+    if (parts.length > 0) {
+      const city = parts[parts.length - 1].trim();
+      citiesSet.add(city);
+    }
+  });
+  return Array.from(citiesSet).sort();
+};
+
+const KNOWN_CITIES = extractCities(LOCATIONS as any);
+// --- SFÂRȘIT LOGICĂ NOUĂ ---
+
+// --- LOGICĂ SIMULARE AI ---
+const generateBotResponse = (query: string, locations: typeof LOCATIONS): BotResponse => {
+  const normalizedQuery = normalizeString(query);
+
+  // 1. Căutare după oraș
+  let foundCity: string | undefined;
+  for (const city of KNOWN_CITIES) {
+      if (normalizedQuery.includes(normalizeString(city))) {
+          foundCity = city; 
+          break;
+      }
+  }
+
+  if (foundCity) {
+      const cityLocations = locations
+          .filter(loc => loc.address.includes(foundCity!))
+          .sort((a, b) => b.rating - a.rating);
+      
+      if (cityLocations.length > 0) {
+          const top5 = cityLocations.slice(0, 5) as TouristLocation[];
+          
+          let list = `Am găsit ${cityLocations.length} locații în **${foundCity}**. Iată top ${Math.min(5, cityLocations.length)} (sortate după rating):`;
+          
+          top5.forEach((loc, index) => {
+              list += `\n${index + 1}. ⭐ ${loc.name} (Rating: ${loc.rating})`; 
+          });
+
+          return {
+              text: list,
+              locations: top5
+          };
+      }
+      return { text: `Îmi pare rău, nu am găsit nicio locație în baza de date pentru orașul **${foundCity}**.` };
+  }
+  
+  // 2. Căutare după tip de locație (Cafea/Ceai)
+  if (normalizedQuery.includes('cafea') || normalizedQuery.includes('coffee') || normalizedQuery.includes('ceai')) {
     const coffeePlaces = locations.filter(loc => 
-      loc.name.toLowerCase().includes('coffee') || 
-      loc.name.toLowerCase().includes('café') || 
-      loc.name.toLowerCase().includes('cafe') ||
-      loc.short_description.toLowerCase().includes('cafea') ||
-      loc.short_description.toLowerCase().includes('ceai')
+      normalizeString(loc.name).includes('coffee') || 
+      normalizeString(loc.name).includes('cafe') || 
+      normalizeString(loc.short_description).includes('cafea') ||
+      normalizeString(loc.short_description).includes('ceai')
     );
     
     if (coffeePlaces.length > 0) {
-      const bestPlace = coffeePlaces.sort((a, b) => b.rating - a.rating)[0];
-      return `Pentru o cafea excelentă, îți recomand **${bestPlace.name}** în ${bestPlace.address.split(',').pop()?.trim()}. Au un rating de ${bestPlace.rating} și sunt cunoscuți pentru: "${bestPlace.short_description}".`;
+      const bestPlace = coffeePlaces.sort((a, b) => b.rating - a.rating)[0] as TouristLocation;
+      return {
+          text: `Pentru o cafea excelentă, îți recomand **${bestPlace.name}** în ${bestPlace.address.split(',').pop()?.trim()}. Au un rating de ${bestPlace.rating} și sunt cunoscuți pentru: "${bestPlace.short_description}".`,
+          locations: [bestPlace]
+      };
     }
-    return "Nu am găsit nicio cafenea care să se potrivească. Poți încerca să cauți un oraș specific!";
+    return { text: "Nu am găsit nicio cafenea care să se potrivească. Poți încerca să cauți un oraș specific!" };
   }
 
-  // 2. Căutare după cel mai bun rating general (pentru întrebări generale)
-  if (lowerQuery.includes('cel mai bun') || lowerQuery.includes('unde merg')) {
+  // 3. Căutare după cel mai bun rating general (pentru întrebări generale)
+  if (normalizedQuery.includes('cel mai bun') || normalizedQuery.includes('unde merg')) {
     const sorted = [...locations].sort((a, b) => b.rating - a.rating);
-    const top3 = sorted.slice(0, 3);
+    const top3 = sorted.slice(0, 3) as TouristLocation[];
     
     if (top3.length > 0) {
-      const list = top3.map(loc => 
-        `⭐ ${loc.name} (${loc.rating}) în ${loc.address.split(',').pop()?.trim()}`
-      ).join('\n');
-      return `Am o listă de top 3 locații pe baza rating-ului: \n${list}\n\nUnde dorești să mergi?`;
+        const list = top3.map(loc => 
+            `⭐ ${loc.name} (${loc.rating}) în ${loc.address.split(',').pop()?.trim()}`
+        ).join('\n');
+        
+        return {
+            text: `Am o listă de top 3 locații pe baza rating-ului: \n${list}`,
+            locations: top3
+        };
     }
-    return "Nu am suficiente date pentru a face o recomandare.";
+    return { text: "Nu am suficiente date pentru a face o recomandare." };
   }
 
-  // 3. Căutare Pizza/Burger
-  if (lowerQuery.includes('pizza') || lowerQuery.includes('burger')) {
+  // 4. Căutare Pizza/Burger
+  if (normalizedQuery.includes('pizza') || normalizedQuery.includes('burger')) {
     const pizzaBurger = locations.filter(loc => 
-      loc.name.toLowerCase().includes('pizza') || 
-      loc.name.toLowerCase().includes('burger') ||
-      loc.short_description.toLowerCase().includes('pizza') ||
-      loc.short_description.toLowerCase().includes('burger')
+      normalizeString(loc.name).includes('pizza') || 
+      normalizeString(loc.name).includes('burger') ||
+      normalizeString(loc.short_description).includes('pizza') ||
+      normalizeString(loc.short_description).includes('burger')
     );
 
     if (pizzaBurger.length > 0) {
-        const bestFastFood = pizzaBurger.sort((a, b) => b.rating - a.rating)[0];
-        return `Dacă îți este poftă de ceva rapid, **${bestFastFood.name}** este o alegere bună (${bestFastFood.rating}). Detalii: "${bestFastFood.short_description}".`;
+        const bestFastFood = pizzaBurger.sort((a, b) => b.rating - a.rating)[0] as TouristLocation;
+        return {
+             text: `Dacă îți este poftă de ceva rapid, **${bestFastFood.name}** este o alegere bună (${bestFastFood.rating}). Detalii: "${bestFastFood.short_description}".`,
+             locations: [bestFastFood]
+        };
     }
-    return "Momentan nu am în baza de date localuri de tip fast-food care să se potrivească cererii tale.";
+    return { text: "Momentan nu am în baza de date localuri de tip fast-food care să se potrivească cererii tale." };
   }
 
-  // 4. Răspuns implicit
-  return `Îmi pare rău, nu am înțeles exact. Sunt antrenat să răspund la întrebări despre locațiile din aplicație (ex: 'Unde pot bea o cafea bună?' sau 'Care e cel mai bun restaurant?').`;
+  // 5. Răspuns implicit
+  return { text: `Îmi pare rău, nu am înțeles exact. Sunt antrenat să răspund la întrebări despre locațiile din aplicație (ex: 'Unde pot bea o cafea bună?', 'Care e cel mai bun restaurant?' sau 'Ce pot face în Iași?').` };
 };
 
 // --- COMPONENTĂ PRINCIPALĂ ---
@@ -95,6 +187,15 @@ export default function ChatbotScreen() { // Aici începe funcția
     },
   ]);
   const [inputText, setInputText] = useState('');
+  
+  // Funcția de navigare către DetailsScreen
+  const navigateToDetails = useCallback((location: TouristLocation) => {
+    // Navigăm către ecranul de detalii trimițând obiectul de locație ca string JSON
+    router.push({
+        pathname: "/screens/DetailsScreen",
+        params: { item: JSON.stringify(location) } 
+    });
+  }, []);
 
   const handleSend = useCallback(() => {
     if (!inputText.trim()) return;
@@ -109,21 +210,23 @@ export default function ChatbotScreen() { // Aici începe funcția
     // 1. Adaugă mesajul utilizatorului
     setMessages(prev => [newUserMessage, ...prev]);
 
-    // 2. Generează și adaugă răspunsul bot-ului
-    const botResponseText = generateBotResponse(newUserMessage.text, LOCATIONS as any);
+    // 2. Generează răspunsul bot-ului
+    const botResponse = generateBotResponse(newUserMessage.text, LOCATIONS as any);
     
+    // 3. Creează noul mesaj al bot-ului stocând și locațiile recomandate
     const newBotMessage: Message = {
       id: (Date.now() + 1).toString(),
-      text: botResponseText,
+      text: botResponse.text,
       sender: 'bot',
       timestamp: new Date().toLocaleTimeString(),
+      recommendedLocations: botResponse.locations, // Stochează locațiile
     };
 
     setTimeout(() => {
         setMessages(prev => [newBotMessage, ...prev]);
     }, 500); // Simulează un delay de răspuns
 
-    // 3. Resetează input-ul
+    // 4. Resetează input-ul
     setInputText('');
   }, [inputText]);
 
@@ -136,7 +239,11 @@ export default function ChatbotScreen() { // Aici începe funcția
       {item.sender === 'bot' && (
          <Ionicons name="sparkles" size={20} color="#7C3AED" style={styles.botIcon} />
       )}
-      <View style={styles.messageContent}>
+      {/* Aplică flex: 1 pentru ca messageContent să ocupe spațiul rămas, rezolvând problema de wrap */}
+      <View style={[
+        styles.messageContent,
+        item.sender === 'bot' && { flex: 1 } 
+      ]}>
         <Text style={[
             styles.senderName, 
             item.sender === 'user' && { color: '#FFF' }
@@ -144,8 +251,27 @@ export default function ChatbotScreen() { // Aici începe funcția
         <Text style={[
             styles.messageText, 
             item.sender === 'user' && { color: '#FFF' },
-            item.sender === 'bot' && { flexShrink: 1 }
         ]}>{item.text}</Text>
+        
+        {/* LOGICĂ: Afișează butoane/link-uri pentru fiecare locație recomandată */}
+        {item.sender === 'bot' && item.recommendedLocations && item.recommendedLocations.length > 0 && (
+            <View style={styles.recommendedLinksContainer}>
+                <Text style={styles.recommendedLinksTitle}>Apasă pentru detalii:</Text>
+                {item.recommendedLocations.map((loc, index) => (
+                    <TouchableOpacity
+                        key={index}
+                        style={styles.detailsButton}
+                        onPress={() => navigateToDetails(loc)}
+                    >
+                        <Text style={styles.detailsButtonText}>
+                          {loc.name}
+                        </Text>
+                        <Ionicons name="arrow-forward" size={14} color="#7C3AED" />
+                    </TouchableOpacity>
+                ))}
+            </View>
+        )}
+
         <Text style={[
             styles.timestamp, 
             item.sender === 'user' && { color: 'rgba(255, 255, 255, 0.7)' }
@@ -170,7 +296,8 @@ export default function ChatbotScreen() { // Aici începe funcția
       />
       
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        // CORECȚIE: Schimbăm 'height' la 'padding' și pe Android pentru o mai bună vizibilitate
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} 
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0} 
         style={styles.inputArea}
       >
@@ -204,6 +331,8 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
+    // MODIFICARE: Mărim padding-ul de sus pentru a evita notch-ul/bara de stare
+    paddingTop: 40, 
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
@@ -301,4 +430,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // STILURI PENTRU LINK-URILE RECOMANDATE
+  recommendedLinksContainer: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB', 
+    gap: 8,
+  },
+  recommendedLinksTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#7C3AED',
+    marginBottom: 4,
+  },
+  detailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 8,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  detailsButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    marginRight: 10,
+  }
 });

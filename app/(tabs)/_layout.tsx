@@ -28,13 +28,19 @@ export default function TabsLayout() {
           ),
         }}
       />
-      {/* Tab-ul "chatbot" este deja în mijloc (poziția 2) */}
+      {/* Tab-ul "chatbot" este acum în mijloc (poziția 2) */}
       <Tabs.Screen
         name="chatbot" // Poziția 2: ChatbotScreen (chatbox.tsx)
         options={{
           title: "Asistent AI",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles" size={size} color={color} />
+          // CORECȚIE FINALĂ: Utilizăm un operator ternar pentru a forța pictograma plină/goală
+          // care este mai specifică pentru un chatbox.
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons 
+              name={focused ? "chatbox-ellipses" : "chatbox-ellipses-outline"} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />
