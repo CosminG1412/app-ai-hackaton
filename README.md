@@ -1,6 +1,4 @@
-📘 README — Explorează România 🇷🇴
-
-(Actualizat cu detaliile de login)
+## 📘 README — Explorează România 🇷🇴
 
 # 🌄 Explorează România — Aplicație Mobilă cu AI
 
