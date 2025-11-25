@@ -14,13 +14,17 @@ const SAFE_AREA_TOP_PADDING = Platform.OS === 'ios' ? 50 : 30;
 const ADDITIONAL_SPACE_REQUESTED = 30; // Spațiul suplimentar pentru a muta conținutul în jos
 const TOTAL_TOP_OFFSET = SAFE_AREA_TOP_PADDING + ADDITIONAL_SPACE_REQUESTED;
 
+// Culoarea principală de accent din tema: #0a7ea4
+const TINT_COLOR = '#0a7ea4';
+
 export default function ProfileScreen() {
   // Preluarea culorilor din sistemul de teme
   const tint = useThemeColor({}, 'tint');
   
   // Setăm culorile explicit la Alb pentru a asigura fundalul deschis
   const white = '#FFFFFF';
-  const headerBackground = '#E8F5FF'; // Un albastru foarte deschis pentru antet
+  // MODIFICAT: headerBackground folosește acum culoarea principală de accent
+  const headerBackground = TINT_COLOR; 
   
   // Culori de text fixe, închise, pentru a asigura lizibilitatea pe fundal alb
   const primaryTextColor = Colors.light.text;
