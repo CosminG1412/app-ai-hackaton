@@ -50,7 +50,7 @@ interface Message {
   recommendedLocations?: TouristLocation[]; 
 }
 
-const BOT_NAME = 'Asistent AI';
+const BOT_NAME = 'Jon';
 
 interface BotResponse {
     text: string;
