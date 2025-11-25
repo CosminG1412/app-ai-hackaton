@@ -1,3 +1,5 @@
+// cosming1412/app-ai-hackaton/app-ai-hackaton-e9aec78dc2c364af443a8ce82d907bf32556ab6c/app/screens/ChatbotScreen.tsx
+
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -20,12 +22,8 @@ import locationsData from './locatii.json';
 const LOCATIONS = locationsData;
 const { height } = Dimensions.get('window');
 
-// Culoarea principală de accent (din constants/theme.ts)
 const TINT_COLOR = '#0a7ea4'; 
 
-// 
-// 🚨 ATENȚIE: Aici se accesează cheia din Variabilele de Mediu (EXPO_PUBLIC_ prefix este necesar în Expo) 🚨
-//
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY; 
 
 // --- TIPURI DATE ---
@@ -41,6 +39,7 @@ interface TouristLocation {
   image_url: string;
   short_description: string;
   rating: number;
+  category: string; 
 }
 
 interface Message {
@@ -51,9 +50,8 @@ interface Message {
   recommendedLocations?: TouristLocation[]; 
 }
 
-const BOT_NAME = 'Jon';
+const BOT_NAME = 'Asistent AI';
 
-// Tipul de return pentru funcția de logică a bot-ului
 interface BotResponse {
     text: string;
     locations?: TouristLocation[];
@@ -72,58 +70,109 @@ const normalizeString = (str: string): string => {
     .replace(/ț/g, 't');
 };
 
-// --- LOGICĂ NOUĂ: EXTRAGEREA DINAMICĂ A ORAȘELOR ---
+const extractCityFromAddress = (address: string) => {
+    const parts = address.split(',');
+    return parts[parts.length - 1].trim();
+};
+
 const extractCities = (locations: typeof LOCATIONS): string[] => {
   const citiesSet = new Set<string>();
-  locations.forEach(loc => {
-    // Orașul este ultimul element din adresa separată prin virgulă
-    const parts = loc.address.split(',');
-    if (parts.length > 0) {
-      const city = parts[parts.length - 1].trim();
-      citiesSet.add(city);
-    }
+  (locations as TouristLocation[]).forEach(loc => { 
+    const city = extractCityFromAddress(loc.address);
+    citiesSet.add(city);
   });
   return Array.from(citiesSet).sort();
 };
 
 const KNOWN_CITIES = extractCities(LOCATIONS as any);
-// --- SFÂRȘIT LOGICĂ NOUĂ ---
 
-// --- LOGICĂ NOUĂ: INTEGRARE LLM REALĂ (CU APEL ASINCRON) ---
-const generateBotResponse = async (query: string, locations: TouristLocation[]): Promise<BotResponse> => {
+// --- LOGICĂ NOUĂ: DETERMINAREA ORAȘULUI DE CONTEXT DIN ISTORIC ---
+const getHistoricalCity = (messages: Message[]): string | undefined => {
+    const lastNMessages = messages.slice(0, 10); // Verificăm ultimele 10 mesaje
+    
+    for (const msg of lastNMessages) {
+        const normalizedText = normalizeString(msg.text);
+
+        // 1. Caută un oraș menționat explicit de UTILIZATOR
+        if (msg.sender === 'user') {
+            for (const city of KNOWN_CITIES) {
+                if (normalizedText.includes(normalizeString(city))) {
+                    return city; 
+                }
+            }
+        }
+
+        // 2. Caută un oraș recomandat de BOT (dacă a făcut o recomandare)
+        if (msg.sender === 'bot' && msg.recommendedLocations && msg.recommendedLocations.length > 0) {
+            // Ia orașul primei locații recomandate
+            const firstRecommended = msg.recommendedLocations[0];
+            return extractCityFromAddress(firstRecommended.address);
+        }
+    }
+    return undefined;
+};
+
+// --- LOGICĂ VECHE ACTUALIZATĂ: CONTEXT DE REZERVĂ ---
+const getDefaultContextCity = (locations: TouristLocation[]) => {
+    // Orașul cu cea mai mare rată (cel mai popular)
+    const sortedLocations = locations.sort((a, b) => b.rating - a.rating);
+    
+    if (sortedLocations.length > 0) {
+        return extractCityFromAddress(sortedLocations[0].address);
+    }
+    return 'România'; 
+};
+
+
+// --- LOGICĂ PRINCIPALĂ DE GENERARE A RĂSPUNSULUI ---
+const generateBotResponse = async (query: string, locations: TouristLocation[], messages: Message[]): Promise<BotResponse> => {
   
   if (!GEMINI_API_KEY) {
       return { text: "Eroare: Cheia API nu a fost găsită. Asigură-te că fișierul .env este setat corect și că serverul Expo a fost repornit." };
   }
   
+  const typedLocations = locations as TouristLocation[];
   const normalizedQuery = normalizeString(query);
-  let foundCity: string | undefined;
+  let foundCityInQuery: string | undefined;
   
+  // 1. Caută orașul explicit în query
   for (const city of KNOWN_CITIES) {
       if (normalizedQuery.includes(normalizeString(city))) {
-          foundCity = city; 
+          foundCityInQuery = city; 
           break;
       }
   }
 
-  const contextualLocations = foundCity 
-    ? locations.filter(loc => loc.address.includes(foundCity!))
-    : locations;
+  // 2. Determinarea orașului de context (ORDINE DE PRIORITATE NOUĂ):
+  const historicalCity = getHistoricalCity(messages);
+  
+  const contextCity = foundCityInQuery || historicalCity || getDefaultContextCity(typedLocations);
     
-  // 1. Pregătește contextul pentru LLM (Top 5 locații relevante)
+  // 3. Filtrează locațiile pe baza orașului determinat
+  const contextualLocations = typedLocations.filter(loc => loc.address.includes(contextCity));
+
+  // 4. Pregătește contextul pentru LLM (Top 5 locații relevante)
   const topLocationsContext = contextualLocations
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 5) 
     .map(loc => 
-      `{name: "${loc.name}", rating: ${loc.rating}, desc: "${loc.short_description}", city: "${loc.address.split(',').pop()?.trim()}"}`
+      `{name: "${loc.name}", category: "${loc.category}", rating: ${loc.rating}, city: "${extractCityFromAddress(loc.address)}"}`
     ).join('; ');
     
-  // 2. Definirea prompt-ului (Instrucțiunea de sistem este mutată în prompt)
-  const systemInstruction = `Ești un asistent AI specializat în recomandări de locații. Răspunde direct, bazându-te doar pe datele oferite. Dacă faci o recomandare, trebuie să menționezi explicit numele complet al locației și ratingul.`;
+  // 5. Definirea prompt-ului cu contextualizare îmbunătățită
+  // NOU: Instrucțiunile sunt mult mai detaliate, punând accentul pe conversație și non-tranzacționalism
+  const systemInstruction = `Ești un asistent AI prietenos, dar concis, specializat în recomandări de locații.
+Obiectivul tău este să oferi cea mai bună experiență de conversație.
+1. **Dacă cererea NU este despre recomandări de locuri (ex: "salut", "ce mai faci", "mersi"), răspunde natural și scurt, fără a oferi o listă de locații.**
+2. **Dacă cererea este despre locuri (ex: "unde mananc", "vreau o cafea", "cluburi"), oferă o recomandare** și evită să folosești fraze generice de început ca "Desigur", "Absolut" sau "Iată recomandările". Începe răspunsul direct și firesc.
+3. Contextul implicit determinat pentru localizare este: ${contextCity}. Prioritizează locațiile din acest oraș.
+4. Structura recomandării: nume complet, categoria, rating.
+`;
   
-  const userPrompt = `${systemInstruction} Recomandă-mi 1-3 locații în funcție de cerere: "${query}". Folosește următoarele date: [${topLocationsContext}]`;
+  // Am inclus instrucțiunea de sistem direct în prompt (contents) pentru a ne asigura că este citită
+  const userPrompt = `${systemInstruction} Cererea utilizatorului: "${query}". Folosește următoarele date: [${topLocationsContext}]`;
 
-  // 3. APEL API REAL LLM (Exemplu pentru Gemini API)
+  // 6. APEL API REAL LLM
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
@@ -132,16 +181,15 @@ const generateBotResponse = async (query: string, locations: TouristLocation[]):
       },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-        // CORECTAT: A fost eliminat câmpul systemInstruction, deoarece dădea eroare 400
         generationConfig: { 
-            temperature: 0.2, 
+            temperature: 0.5, // NOU: Mărim temperatura pentru un ton mai natural, mai puțin mecanic
         },
       }),
     });
 
     const data = await response.json();
     
-    // --- VERIFICARE 1: ERORI HTTP/API ---
+    // ... (Logica de verificare erori)
     if (!response.ok) {
         const errorMessage = data?.error?.message || `Eroare HTTP necunoscută: ${response.status} ${response.statusText}`;
         console.error("API Error:", data);
@@ -151,12 +199,10 @@ const generateBotResponse = async (query: string, locations: TouristLocation[]):
         };
     }
     
-    // Extragem textul generat
     const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     
-    // --- VERIFICARE 2: RĂSPUNS GOL (Blocare de Siguranță sau problemă de generare) ---
     if (!generatedText) {
-        let rejectionReason = "Răspuns gol. Conținutul ar fi putut fi blocat din motive de siguranță sau modelul nu a găsit informații relevante.";
+        let rejectionReason = "Răspuns gol. Conținutul ar fi putut fi blocat din motive de siguranță sau problemă de generare.";
         
         const safetyRatings = data.candidates?.[0]?.safetyRatings;
         if (safetyRatings) {
@@ -169,16 +215,18 @@ const generateBotResponse = async (query: string, locations: TouristLocation[]):
         };
     }
 
-    // 4. LOGICĂ DE PARSARE ȘI RECOMANDARE
-    
+    // 7. LOGICĂ DE PARSARE ȘI RECOMANDARE (Rulăm logica doar dacă textul generat pare să conțină o recomandare)
     let recommended: TouristLocation[] = [];
     
-    // Căutăm manual în lista originală de locații dacă LLM-ul a recomandat un loc anume
-    for (const loc of LOCATIONS) {
-        // Verificăm dacă textul generat conține numele exact al unei locații
-        if (generatedText.includes(loc.name)) {
-            recommended.push(loc);
-            if (recommended.length >= 3) break; 
+    // O logică simplă pentru a determina dacă răspunsul conține o recomandare:
+    const isRecommendationResponse = typedLocations.some(loc => generatedText.includes(loc.name));
+
+    if (isRecommendationResponse) {
+        for (const loc of typedLocations) { 
+            if (generatedText.includes(loc.name)) {
+                recommended.push(loc);
+                if (recommended.length >= 3) break; 
+            }
         }
     }
     
@@ -193,33 +241,30 @@ const generateBotResponse = async (query: string, locations: TouristLocation[]):
   }
 };
 
-// --- COMPONENTĂ PRINCIPALĂ ---
-export default function ChatbotScreen() { // Aici începe funcția
+// --- COMPONENTĂ PRINCIPALĂ (Rămâne neschimbată) ---
+export default function ChatbotScreen() { 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '0',
-      text: `Salut! Sunt ${BOT_NAME}, asistentul tău personal. Întreabă-mă despre locațiile din aplicație. De exemplu: "Unde pot să mănânc o pizza?"`,
+      text: `Salut! Sunt ${BOT_NAME}, asistentul tău personal. Întreabă-mă despre locațiile din aplicație. De exemplu: "Unde pot să mănânc o pizza în Timișoara?"`,
       sender: 'bot',
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
   const [inputText, setInputText] = useState('');
   
-  // Funcția de navigare către DetailsScreen
   const navigateToDetails = useCallback((location: TouristLocation) => {
-    // Navigăm către ecranul de detalii trimițând obiectul de locație ca string JSON
     router.push({
         pathname: "/screens/DetailsScreen",
         params: { item: JSON.stringify(location) } 
     });
   }, []);
 
-  const handleSend = useCallback(async () => { // Adăugăm 'async'
+  const handleSend = useCallback(async () => { 
     if (!inputText.trim()) return;
 
-    // CAPTURĂM TEXTUL ȘI ȘTERGEM INPUT-UL IMEDIAT AICI:
     const textToSend = inputText.trim();
-    setInputText(''); // CLEARS THE INPUT INSTANTLY
+    setInputText(''); 
 
     const newUserMessage: Message = {
       id: Date.now().toString(),
@@ -228,26 +273,22 @@ export default function ChatbotScreen() { // Aici începe funcția
       timestamp: new Date().toLocaleTimeString(),
     };
 
-    // 1. Adaugă mesajul utilizatorului
     setMessages(prev => [newUserMessage, ...prev]);
 
-    // 2. Generează răspunsul bot-ului ASINCRON și AȘTEAPTĂ
-    const botResponse = await generateBotResponse(textToSend, LOCATIONS as any);
+    // Mesajele sunt trimise corect la funcția de generare
+    const botResponse = await generateBotResponse(textToSend, LOCATIONS as any, messages); 
     
-    // 3. Creează noul mesaj al bot-ului stocând și locațiile recomandate
     const newBotMessage: Message = {
       id: (Date.now() + 1).toString(),
       text: botResponse.text,
       sender: 'bot',
       timestamp: new Date().toLocaleTimeString(),
-      recommendedLocations: botResponse.locations, // Stochează locațiile
+      recommendedLocations: botResponse.locations, 
     };
 
-    // Setarea noului mesaj al bot-ului
     setMessages(prev => [newBotMessage, ...prev]);
-  }, [inputText]);
+  }, [inputText, messages]); 
 
-  // --- RENDERIZARE MESAJ ---
   const renderMessage = ({ item }: { item: Message }) => (
     <View style={[
       styles.messageContainer,
@@ -256,7 +297,6 @@ export default function ChatbotScreen() { // Aici începe funcția
       {item.sender === 'bot' && (
          <Ionicons name="sparkles" size={20} color={TINT_COLOR} style={styles.botIcon} />
       )}
-      {/* Aplică flex: 1 pentru ca messageContent să ocupe spațiul rămas, rezolvând problema de wrap */}
       <View style={[
         styles.messageContent,
         item.sender === 'bot' && { flex: 1 } 
@@ -278,7 +318,7 @@ export default function ChatbotScreen() { // Aici începe funcția
                     <TouchableOpacity
                         key={index}
                         style={styles.detailsButton}
-                        onPress={() => navigateToDetails(loc)}
+                        onPress={() => navigateToDetails(loc as any)}
                     >
                         <Text style={styles.detailsButtonText}>
                           {loc.name}
@@ -297,7 +337,7 @@ export default function ChatbotScreen() { // Aici începe funcția
     </View>
   );
 
-  return ( // Aici începe return-ul componentei
+  return ( 
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Asistent AI Locații</Text>
@@ -313,7 +353,6 @@ export default function ChatbotScreen() { // Aici începe funcția
       />
       
       <KeyboardAvoidingView 
-        // CORECȚIE: Schimbăm 'height' la 'padding' și pe Android pentru o mai bună vizibilitate
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} 
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0} 
         style={styles.inputArea}
@@ -338,8 +377,8 @@ export default function ChatbotScreen() { // Aici începe funcția
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  ); // Aici se închide return-ul
-} // Aici se închide funcția ChatbotScreen
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -348,7 +387,6 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    // MODIFICARE: Mărim padding-ul de sus pentru a evita notch-ul/bara de stare
     paddingTop: 40, 
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
@@ -377,14 +415,14 @@ const styles = StyleSheet.create({
   userMessageContainer: {
     alignSelf: 'flex-end',
     backgroundColor: TINT_COLOR,
-    borderRadius: 12, // Folosim borderRadius direct aici
+    borderRadius: 12, 
     borderTopRightRadius: 0,
     marginLeft: 10, 
   },
   botMessageContainer: {
     alignSelf: 'flex-start',
     backgroundColor: '#FFF',
-    borderRadius: 12, // Folosim borderRadius direct aici
+    borderRadius: 12, 
     borderTopLeftRadius: 0,
     marginRight: 10,
     borderWidth: 1,
@@ -408,7 +446,7 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     color: '#111827',
-    flexShrink: 1, // Asigură că textul se încadrează
+    flexShrink: 1, 
   },
   timestamp: {
     fontSize: 10,
@@ -436,7 +474,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#111827',
     paddingRight: 10,
-    // Elimină padding-ul inutil din input pe Android pentru a evita problemele de înălțime
     paddingVertical: 0, 
   },
   sendButton: {
@@ -447,7 +484,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // STILURI PENTRU LINK-URILE RECOMANDATE
   recommendedLinksContainer: {
     marginTop: 10,
     paddingTop: 10,
@@ -458,7 +494,7 @@ const styles = StyleSheet.create({
   recommendedLinksTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#7C3AED',
+    color: TINT_COLOR,
     marginBottom: 4,
   },
   detailsButton: {
