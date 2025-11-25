@@ -1,50 +1,169 @@
-# Welcome to your Expo app 👋
+📘 README — Explorează România 🇷🇴
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+(Actualizat cu detaliile de login)
 
-## Get started
+# 🌄 Explorează România — Aplicație Mobilă cu AI
 
-1. Install dependencies
+Explorează România este o aplicație mobilă modernă, construită pentru hackathonul 2025, ce ajută utilizatorii să descopere locații din România într-un mod inteligent, rapid și personalizat.
+Aplicația combină o interfață intuitivă cu un asistent AI puternic, generare de „vibe” pentru locații, căutare rapidă, vizualizare pe hartă și funcții sociale precum rezervare directă pe WhatsApp.
 
-   ```bash
-   npm install
-   ```
+👥 Echipă
 
-2. Start the app
+Groza Cosmin — Mobile Developer, AI Integration
 
-   ```bash
-   npx expo start
-   ```
+Robert Andone — Mobile Developer, UI/UX
 
-In the output, you'll find options to open the app in a
+🤖 Tehnologii & AI
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Aplicația integrează multiple modele AI pentru precizie și flexibilitate:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+OpenAI GPT-5.1 (Plus)
 
-## Get a fresh project
+Google Gemini Pro
 
-When you're ready, run:
+Claude (VS Code Helper)
 
-```bash
-npm run reset-project
-```
+🚀 Funcționalități principale
+🔐 1. Autentificare (Mock Login)
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Ecran modern de login cu validare locală.
+Pentru a intra în aplicație, trebuie folosite credențialele mock:
 
-## Learn more
+👉 Email: user@test.com
+👉 Parola: password123
 
-To learn more about developing your project with Expo, look at the following resources:
+✔️ Rutare protejată cu guard logic
+✔️ După logout, utilizatorul revine automat la ecranul de login
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+🏠 2. Explore — Lista completă de locații
 
-## Join the community
+Listă card-based modernă
 
-Join our community of developers creating universal apps.
+Poze HD
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Rating ⭐
+
+Descriere scurtă
+
+Search bar funcțional
+
+Filter icon (UI + logic local)
+
+🗺️ 3. Map View (Hartă interactivă)
+
+Afișare locații pe hartă
+
+Selectarea unui pin → deschidere ecran de detalii
+
+Hărți optimizate pentru performanță
+
+Integrare perfectă cu navigarea
+
+📝 4. Detalii locație + Vibe Generator AI
+
+Pe ecranul de detalii ai:
+
+Poză mare a locației
+
+Nume, rating, adresă
+
+Buton „Generează vibe cu AI”
+
+Generează un text creativ, stil „vibe”
+
+Folosește GPT-5.1 / Gemini Pro
+
+UX modern + loading state
+
+Secțiune „Despre locație”
+
+Buton „Rezervă acum” → WhatsApp precompletat
+
+💬 5. Asistent AI (Chatbot Inteligent)
+
+Asistentul AI înțelege întrebări tematice despre România, precum:
+
+„Cel mai bun restaurant din Timișoara?”
+
+„Un restaurant asiatic în Brașov?”
+
+„Top 3 cafenele din Cluj.”
+
+„Descrie vibe-ul unui loc.”
+
+✔️ Folosește datele interne ale aplicației
+✔️ Răspunsuri naturale, structurate
+✔️ Bilete interactive → tap pentru detalii
+
+👤 6. Profil utilizator
+
+Poză de profil
+
+Nume + username
+
+Oraș
+
+Bio
+
+Card modern
+
+Buton Logout
+
+🛠️ Tehnologii folosite
+
+React Native + Expo
+
+Expo Router
+
+TypeScript
+
+react-native-maps
+
+OpenAI API
+
+Gemini API
+
+Context API
+
+WhatsApp deep-linking
+
+Haptic feedback (expo-haptics)
+
+📂 Structură proiect (simplificată)
+app/
+ ├── (auth)/
+ │     └── login.tsx
+ ├── (tabs)/
+ │     ├── index.tsx        # Explore
+ │     ├── map.tsx          # Map view
+ │     ├── chatbot.tsx      # AI Assistant
+ │     └── profile.tsx      # Profile
+ ├── screens/
+ │     └── DetailsScreen.tsx
+ ├── hooks/
+ │     └── use-auth.ts
+ ├── data/
+ │     └── locations.json
+ └── components/
+
+▶️ Instalare & rulare
+git clone https://github.com/...
+cd app-ai-hackaton
+npm install
+npx expo start
+
+🌟 Ce aduce aplicația?
+
+Interfață prietenoasă și modernă
+
+AI contextual și rapid
+
+Recomandări reale din dataset
+
+Skin complet cu list view + map view
+
+Funcții sociale (WhatsApp)
+
+Vibe generator cu AI
+
+Login mock + profile page

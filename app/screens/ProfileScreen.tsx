@@ -50,29 +50,29 @@ export default function ProfileScreen() {
             style={[styles.profileImage, { borderColor: white }]}
           />
           
-          {/* Numele (Cosmin) este setat explicit la primaryTextColor (negru) pentru lizibilitate maximă */}
+          {/* Numele (Andrei) este setat explicit la primaryTextColor (negru) pentru lizibilitate maximă */}
           <ThemedText 
             type="title" 
             style={[styles.nameText, { color: primaryTextColor }]}
           >
-            Cosmin
+            Andrei
           </ThemedText>
           
           {/* Textul @handle folosește o culoare secundară (dark gray) */}
-          <ThemedText style={{ color: secondaryTextColor, marginBottom: 10 }}>@hackathon-2025</ThemedText>
+          <ThemedText style={{ color: secondaryTextColor, marginBottom: 10 }}>@andrei_popescu15</ThemedText>
 
           {/* 3. Afișare Oraș - Design simplificat și lizibil */}
           <View style={styles.cityContainer}>
             <Ionicons name="location-sharp" size={16} color={secondaryTextColor} style={{ marginRight: 5 }} />
             <ThemedText style={{ color: secondaryTextColor, fontSize: 16 }}>
-                Oraș: <ThemedText type="defaultSemiBold" style={{ color: primaryTextColor }}>Bucharest</ThemedText>
+                Oraș: <ThemedText type="defaultSemiBold" style={{ color: primaryTextColor }}>Galati</ThemedText>
             </ThemedText>
           </View>
 
           <View style={styles.bioContainer}>
             {/* Textul bio folosește primaryTextColor (negru) pentru lizibilitate */}
             <ThemedText style={[styles.bioText, { color: primaryTextColor }]} >
-              Student pasionat de AI și dezvoltare mobilă. Îmi place să explorez cele mai frumoase locații din România! 🇷🇴
+              Student pasionat de AI și dezvoltare mobilă. Îmi place să explorez cele mai frumoase locații din România! 🇷🇴❤️
             </ThemedText>
           </View>
           
