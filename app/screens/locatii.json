@@ -1,409 +1,336 @@
+// cosming1412/app-ai-hackaton/app-ai-hackaton-e9aec78dc2c364af443a8ce82d907bf32556ab6c/app/screens/locatii.json
 [
   {
     "name": "The Literary Coffee House 'Citadel'",
     "address": "Str. Academiei, Nr. 15, Bucharest",
-    "coordinates": {
-      "lat": 44.4363,
-      "long": 26.1018
-    },
+    "coordinates": { "lat": 44.4363, "long": 26.1018 },
     "image_url": "https://images.unsplash.com/photo-1435224654926-ecc9f7fa028c",
     "short_description": "A quiet place, ideal for reading and study sessions. Excellent espresso.",
-    "rating": 4.8
+    "rating": 4.8,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Restaurant 'The Old Inn'",
     "address": "Piața Unirii, Nr. 4, Cluj-Napoca",
-    "coordinates": {
-      "lat": 46.7709,
-      "long": 23.5891
-    },
+    "coordinates": { "lat": 46.7709, "long": 23.5891 },
     "image_url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
     "short_description": "Traditional Romanian dishes, generous servings, and live folk music.",
-    "rating": 4.5
+    "rating": 4.5,
+    "category": "Restaurant Tradițional"
   },
   {
     "name": "The Global Wok Bistro",
     "address": "Bulevardul Eroilor, Nr. 8, Timișoara",
-    "coordinates": {
-      "lat": 45.7537,
-      "long": 21.2257
-    },
+    "coordinates": { "lat": 45.7537, "long": 21.2257 },
     "image_url": "https://images.unsplash.com/photo-1505483531331-fc3cf89fd382",
     "short_description": "Fast and tasty Asian food, a favorite among Polytechnic students.",
-    "rating": 4.2
+    "rating": 4.2,
+    "category": "Asiatic/Mexican"
   },
   {
     "name": "Café 'New World'",
     "address": "Str. Lăpușneanu, Nr. 12, Iași",
-    "coordinates": {
-      "lat": 47.1601,
-      "long": 27.5794
-    },
+    "coordinates": { "lat": 47.1601, "long": 27.5794 },
     "image_url": "https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f",
     "short_description": "Modern design, perfect for a relaxed brunch. They have the best cakes.",
-    "rating": 4.7
+    "rating": 4.7,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Pizzeria 'Il Drago'",
     "address": "Str. Nicolae Bălcescu, Nr. 20, Brașov",
-    "coordinates": {
-      "lat": 45.6429,
-      "long": 25.5888
-    },
+    "coordinates": { "lat": 45.6429, "long": 25.5888 },
     "image_url": "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
     "short_description": "Wood-fired oven pizza, authentic Italian ingredients. Excellent for groups.",
-    "rating": 4.6
+    "rating": 4.6,
+    "category": "Pizza/Italian"
   },
   {
     "name": "Vegan Restaurant 'The Green Garden'",
     "address": "Splaiul Independenței, Nr. 300, Bucharest",
-    "coordinates": {
-      "lat": 44.4379,
-      "long": 26.0463
-    },
+    "coordinates": { "lat": 44.4379, "long": 26.0463 },
     "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
     "short_description": "Healthy, plant-based options. Fresh smoothies and delicious cream soups.",
-    "rating": 4.9
+    "rating": 4.9,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Coffee Shop 'By The Faculty'",
     "address": "Str. Observatorului, Nr. 17, Cluj-Napoca",
-    "coordinates": {
-      "lat": 46.7570,
-      "long": 23.5786
-    },
+    "coordinates": { "lat": 46.7570, "long": 23.5786 },
     "image_url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
     "short_description": "Strategic location near the campus. Quick and affordable student lunch menu.",
-    "rating": 4.0
+    "rating": 4.0,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Burger Shack",
     "address": "Calea Moșilor, Nr. 250, Bucharest",
-    "coordinates": {
-      "lat": 44.4449,
-      "long": 26.1103
-    },
+    "coordinates": { "lat": 44.4449, "long": 26.1103 },
     "image_url": "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
     "short_description": "The best artisanal burgers in town, featuring Black Angus beef.",
-    "rating": 4.4
+    "rating": 4.4,
+    "category": "Fast Food/Burger"
   },
   {
     "name": "Tea House 'Sunset'",
     "address": "Str. George Enescu, Nr. 3, Sibiu",
-    "coordinates": {
-      "lat": 45.7958,
-      "long": 24.1528
-    },
+    "coordinates": { "lat": 45.7958, "long": 24.1528 },
     "image_url": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e",
     "short_description": "An oasis of calm with over 50 types of tea and ambient music.",
-    "rating": 4.7
+    "rating": 4.7,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Restaurant Pescaresc 'The Sea'",
     "address": "Bulevardul Mamaia, Nr. 200, Constanța",
-    "coordinates": {
-      "lat": 44.1751,
-      "long": 28.6367
-    },
+    "coordinates": { "lat": 44.1751, "long": 28.6367 },
     "image_url": "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
     "short_description": "Fresh fish and seafood specialties, with a view of the sea.",
-    "rating": 4.5
+    "rating": 4.5,
+    "category": "Restaurant Tradițional"
   },
   {
     "name": "Bistro 'At The Forest'",
     "address": "Aleea Parcului, Nr. 7, Oradea",
-    "coordinates": {
-      "lat": 47.0506,
-      "long": 21.9161
-    },
+    "coordinates": { "lat": 47.0506, "long": 21.9161 },
     "image_url": "https://images.unsplash.com/photo-1465101162946-4377e57745c3",
     "short_description": "International menu, green terrace. Ideal for a romantic dinner.",
-    "rating": 4.3
+    "rating": 4.3,
+    "category": "Diverse"
   },
   {
     "name": "Gaming Coffee Shop 'Restart'",
     "address": "Strada Vasile Alecsandri, Nr. 5, Galați",
-    "coordinates": {
-      "lat": 45.4385,
-      "long": 28.0559
-    },
+    "coordinates": { "lat": 45.4385, "long": 28.0559 },
     "image_url": "https://images.unsplash.com/photo-1500534623283-312aade485b7",
     "short_description": "Board games, consoles, and coffee. An excellent place for socializing.",
-    "rating": 4.1
+    "rating": 4.1,
+    "category": "Bar/Pub"
   },
   {
     "name": "Trattoria 'Bella Vita'",
     "address": "Bulevardul Carol I, Nr. 18, Craiova",
-    "coordinates": {
-      "lat": 44.3297,
-      "long": 23.8000
-    },
+    "coordinates": { "lat": 44.3297, "long": 23.8000 },
     "image_url": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
     "short_description": "Homemade pasta and Italian wines. Mediterranean atmosphere.",
-    "rating": 4.6
+    "rating": 4.6,
+    "category": "Pizza/Italian"
   },
   {
     "name": "Bread and Coffee",
     "address": "Strada Republicii, Nr. 10, Ploiești",
-    "coordinates": {
-      "lat": 44.9450,
-      "long": 26.0315
-    },
+    "coordinates": { "lat": 44.9450, "long": 26.0315 },
     "image_url": "https://images.unsplash.com/photo-1435224654926-ecc9f7fa028c",
     "short_description": "Artisanal bakery with specialty coffees. Ideal for breakfast.",
-    "rating": 4.8
+    "rating": 4.8,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Fast-Food 'Döner King'",
     "address": "Calea Șagului, Nr. 55, Timișoara",
-    "coordinates": {
-      "lat": 45.7275,
-      "long": 21.2188
-    },
+    "coordinates": { "lat": 45.7275, "long": 21.2188 },
     "image_url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
     "short_description": "Döner Kebab and Shawarma. Quick and filling option after classes.",
-    "rating": 3.9
+    "rating": 3.9,
+    "category": "Fast Food/Burger"
   },
   {
     "name": "Restaurant 'The Citadel'",
     "address": "Strada Mureșenilor, Nr. 1, Târgu Mureș",
-    "coordinates": {
-      "lat": 46.5459,
-      "long": 24.5623
-    },
+    "coordinates": { "lat": 46.5459, "long": 24.5623 },
     "image_url": "https://images.unsplash.com/photo-1505483531331-fc3cf89fd382",
     "short_description": "Traditional Transylvanian food, next to the Medieval Citadel.",
-    "rating": 4.4
+    "rating": 4.4,
+    "category": "Restaurant Tradițional"
   },
   {
     "name": "Smoothie Bar 'Energy'",
     "address": "Bulevardul 1 Decembrie 1918, Nr. 100, Alba Iulia",
-    "coordinates": {
-      "lat": 46.0683,
-      "long": 23.5855
-    },
+    "coordinates": { "lat": 46.0683, "long": 23.5855 },
     "image_url": "https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f",
     "short_description": "Smoothies, natural juices, and acai bowls for an energy boost.",
-    "rating": 4.9
+    "rating": 4.9,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Restaurant 'Grandma's House'",
     "address": "Strada Republicii, Nr. 45, Brașov",
-    "coordinates": {
-      "lat": 45.6425,
-      "long": 25.5880
-    },
+    "coordinates": { "lat": 45.6425, "long": 25.5880 },
     "image_url": "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
     "short_description": "Fixed (lunch) menu, cheap and tasty, just like home.",
-    "rating": 4.3
+    "rating": 4.3,
+    "category": "Restaurant Tradițional"
   },
   {
     "name": "Irish Pub 'The Shamrock'",
     "address": "Strada Universității, Nr. 9, Iași",
-    "coordinates": {
-      "lat": 47.1633,
-      "long": 27.5790
-    },
+    "coordinates": { "lat": 47.1633, "long": 27.5790 },
     "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
     "short_description": "Craft beer, quiz nights, and live sports. Popular student spot.",
-    "rating": 4.5
+    "rating": 4.5,
+    "category": "Bar/Pub"
   },
   {
     "name": "Coffee Shop 'Zen'",
     "address": "Strada Dorobanților, Nr. 80, Cluj-Napoca",
-    "coordinates": {
-      "lat": 46.7770,
-      "long": 23.6067
-    },
+    "coordinates": { "lat": 46.7770, "long": 23.6067 },
     "image_url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
     "short_description": "Minimalist design, specialty coffee, and relaxing background music.",
-    "rating": 4.7
+    "rating": 4.7,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Folkloric Restaurant 'The Hearth'",
     "address": "Strada Sforii, Nr. 1, Brașov",
-    "coordinates": {
-      "lat": 45.6416,
-      "long": 25.5866
-    },
+    "coordinates": { "lat": 45.6416, "long": 25.5866 },
     "image_url": "https://images.unsplash.com/photo-1465101162946-4377e57745c3",
     "short_description": "Rustic, traditional food with a view near the Black Church.",
-    "rating": 4.7
+    "rating": 4.7,
+    "category": "Restaurant Tradițional"
   },
   {
     "name": "Sushi Bar 'Maki'",
     "address": "Bulevardul Dacia, Nr. 50, București",
-    "coordinates": {
-      "lat": 44.4440,
-      "long": 26.1090
-    },
+    "coordinates": { "lat": 44.4440, "long": 26.1090 },
     "image_url": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
     "short_description": "Fresh sushi and sashimi, modern setting. Great lunch deals.",
-    "rating": 4.5
+    "rating": 4.5,
+    "category": "Asiatic/Mexican"
   },
   {
     "name": "Tavern 'Poseidon'",
     "address": "Strada Portului, Nr. 10, Constanța",
-    "coordinates": {
-      "lat": 44.1750,
-      "long": 28.6350
-    },
+    "coordinates": { "lat": 44.1750, "long": 28.6350 },
     "image_url": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e",
     "short_description": "Authentic Greek cuisine right on the shore.",
-    "rating": 4.6
+    "rating": 4.6,
+    "category": "Restaurant Tradițional"
   },
   {
     "name": "Juice Bar 'Vitamin C'",
     "address": "Piața Victoriei, Nr. 1, Timișoara",
-    "coordinates": {
-      "lat": 45.7551,
-      "long": 21.2289
-    },
+    "coordinates": { "lat": 45.7551, "long": 21.2289 },
     "image_url": "https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f",
     "short_description": "Cold-pressed juices and healthy wraps. Central location.",
-    "rating": 4.2
+    "rating": 4.2,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Steakhouse 'The Butcher'",
     "address": "Calea Florești, Nr. 100, Cluj-Napoca",
-    "coordinates": {
-      "lat": 46.7600,
-      "long": 23.5600
-    },
+    "coordinates": { "lat": 46.7600, "long": 23.5600 },
     "image_url": "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
     "short_description": "Prime beef cuts and an impressive wine list. High-end experience.",
-    "rating": 4.9
+    "rating": 4.9,
+    "category": "Diverse"
   },
   {
     "name": "Bakery-Café 'Sweet Spot'",
     "address": "Strada Unirii, Nr. 30, Iași",
-    "coordinates": {
-      "lat": 47.1580,
-      "long": 27.5750
-    },
+    "coordinates": { "lat": 47.1580, "long": 27.5750 },
     "image_url": "https://images.unsplash.com/photo-1435224654926-ecc9f7fa028c",
     "short_description": "Artisan pastries and excellent specialty coffee. Great morning vibe.",
-    "rating": 4.8
+    "rating": 4.8,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Sports Bar 'Goal'",
     "address": "Bulevardul Mihai Viteazu, Nr. 5, Craiova",
-    "coordinates": {
-      "lat": 44.3310,
-      "long": 23.8050
-    },
+    "coordinates": { "lat": 44.3310, "long": 23.8050 },
     "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
     "short_description": "Large screens for matches, beer on tap, and pub food.",
-    "rating": 4.1
+    "rating": 4.1,
+    "category": "Bar/Pub"
   },
   {
     "name": "Mexican Grill 'El Fuego'",
     "address": "Strada Vămii, Nr. 15, Galați",
-    "coordinates": {
-      "lat": 45.4390,
-      "long": 28.0570
-    },
+    "coordinates": { "lat": 45.4390, "long": 28.0570 },
     "image_url": "https://images.unsplash.com/photo-1505483531331-fc3cf89fd382",
     "short_description": "Authentic tacos and spicy margaritas. Lively atmosphere.",
-    "rating": 4.3
+    "rating": 4.3,
+    "category": "Asiatic/Mexican"
   },
   {
     "name": "Pancake House 'Fluffy'",
     "address": "Bulevardul Independenței, Nr. 20, Ploiești",
-    "coordinates": {
-      "lat": 44.9350,
-      "long": 26.0300
-    },
+    "coordinates": { "lat": 44.9350, "long": 26.0300 },
     "image_url": "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
     "short_description": "Sweet and savory American-style pancakes. Perfect for a cheat day.",
-    "rating": 4.4
+    "rating": 4.4,
+    "category": "Desert/Dulciuri"
   },
   {
     "name": "Winery & Bistro 'Vineyard'",
     "address": "Calea Moților, Nr. 2, Alba Iulia",
-    "coordinates": {
-      "lat": 46.0710,
-      "long": 23.5780
-    },
+    "coordinates": { "lat": 46.0710, "long": 23.5780 },
     "image_url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
     "short_description": "Local wines and gourmet cheeses, cozy setting in the Citadel.",
-    "rating": 4.8
+    "rating": 4.8,
+    "category": "Bar/Pub"
   },
   {
     "name": "Ice Cream Parlor 'Gelateria'",
     "address": "Piața Mare, Nr. 10, Sibiu",
-    "coordinates": {
-      "lat": 45.7970,
-      "long": 24.1530
-    },
+    "coordinates": { "lat": 45.7970, "long": 24.1530 },
     "image_url": "https://images.unsplash.com/photo-1500534623283-312aade485b7",
     "short_description": "Homemade Italian ice cream and unique seasonal flavors.",
-    "rating": 4.7
+    "rating": 4.7,
+    "category": "Desert/Dulciuri"
   },
   {
     "name": "Tapas Bar 'Hola'",
     "address": "Strada Lipscani, Nr. 50, București",
-    "coordinates": {
-      "lat": 44.4330,
-      "long": 26.1020
-    },
+    "coordinates": { "lat": 44.4330, "long": 26.1020 },
     "image_url": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564",
     "short_description": "Spanish tapas and sangria. Great for evening gatherings.",
-    "rating": 4.5
+    "rating": 4.5,
+    "category": "Asiatic/Mexican"
   },
   {
     "name": "Pho and Rolls",
     "address": "Bulevardul Titulescu, Nr. 10, Oradea",
-    "coordinates": {
-      "lat": 47.0540,
-      "long": 21.9200
-    },
+    "coordinates": { "lat": 47.0540, "long": 21.9200 },
     "image_url": "https://images.unsplash.com/photo-1505483531331-fc3cf89fd382",
     "short_description": "Delicious Vietnamese pho and fresh spring rolls.",
-    "rating": 4.4
+    "rating": 4.4,
+    "category": "Asiatic/Mexican"
   },
   {
     "name": "Club/Lounge 'SkyView'",
     "address": "Calea Victoriei, Nr. 100, București",
-    "coordinates": {
-      "lat": 44.4390,
-      "long": 26.0970
-    },
+    "coordinates": { "lat": 44.4390, "long": 26.0970 },
     "image_url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
     "short_description": "Cocktails and panoramic view of the city.",
-    "rating": 4.6
+    "rating": 4.6,
+    "category": "Bar/Pub"
   },
   {
     "name": "Tea & Hookah 'Cloud Nine'",
     "address": "Strada Vasile Goldiș, Nr. 5, Târgu Mureș",
-    "coordinates": {
-      "lat": 46.5465,
-      "long": 24.5630
-    },
+    "coordinates": { "lat": 46.5465, "long": 24.5630 },
     "image_url": "https://images.unsplash.com/photo-1470770841072-f978cf4d019e",
     "short_description": "Exotic tea selection and relaxing ambiance.",
-    "rating": 4.1
+    "rating": 4.1,
+    "category": "Cafea/Ceai"
   },
   {
     "name": "Craft Beer Pub 'The Hop'",
     "address": "Strada Popa Șapcă, Nr. 2, Timișoara",
-    "coordinates": {
-      "lat": 45.7500,
-      "long": 21.2200
-    },
+    "coordinates": { "lat": 45.7500, "long": 21.2200 },
     "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
     "short_description": "Rotating selection of local and international craft beers.",
-    "rating": 4.6
+    "rating": 4.6,
+    "category": "Bar/Pub"
   },
   {
     "name": "Fine Dining 'Elegance'",
     "address": "Bulevardul Eroilor, Nr. 20, Cluj-Napoca",
-    "coordinates": {
-      "lat": 46.7720,
-      "long": 23.5950
-    },
+    "coordinates": { "lat": 46.7720, "long": 23.5950 },
     "image_url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
     "short_description": "Modern European cuisine, ideal for special occasions.",
-    "rating": 5.0
+    "rating": 5.0,
+    "category": "Diverse"
   }
 ]

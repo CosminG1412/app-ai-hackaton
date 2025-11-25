@@ -51,7 +51,7 @@ interface Message {
   recommendedLocations?: TouristLocation[]; 
 }
 
-const BOT_NAME = 'Asistent AI';
+const BOT_NAME = 'Jon';
 
 // Tipul de return pentru funcția de logică a bot-ului
 interface BotResponse {

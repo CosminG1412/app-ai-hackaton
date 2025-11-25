@@ -1,3 +1,5 @@
+// cosming1412/app-ai-hackaton/app-ai-hackaton-e9aec78dc2c364af443a8ce82d907bf32556ab6c/app/screens/DetailsScreen.tsx
+
 import React, { useState } from 'react';
 import { 
   View, 
@@ -9,7 +11,7 @@ import {
   SafeAreaView, 
   StatusBar,
   Dimensions,
-  Linking,
+  Linking, // <-- IMPORTANT: Deja importat
   ActivityIndicator,
   Platform,
   Share 
@@ -18,6 +20,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
+
+const TINT_COLOR = '#0a7ea4'; // Adăugat pentru a folosi în stiluri
+const TINT_COLOR_LIGHT_BG = '#E5F6F8'; // Adăugat pentru a folosi în stiluri
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY; 
 
@@ -48,6 +53,25 @@ export default function DetailsScreen() {
   const [aiLoading, setAiLoading] = useState(false);
   const [description, setDescription] = useState(item.short_description);
 
+  // --- FUNCTIE NOUĂ: DESCHIDERE HARTĂ ---
+  const openMapForLocation = () => {
+    const { lat, long } = item.coordinates;
+    const label = encodeURIComponent(item.name);
+    
+    // Schema universală pentru coordonate (funcționează pe iOS și Android)
+    const url = Platform.select({
+      ios: `maps://app?daddr=${lat},${long}&q=${label}`,
+      android: `geo:${lat},${long}?q=${label}`,
+      default: `https://www.google.com/maps/search/?api=1&query=${lat},${long}&query_place_id=${label}`
+    });
+
+    if (url) {
+      Linking.openURL(url).catch(err => console.error('An error occurred opening maps', err));
+    } else {
+      alert('Nu se poate deschide harta pe această platformă.');
+    }
+  };
+
   const generateAiVibe = async () => { 
     if (aiLoading) return;
     setAiLoading(true);
@@ -58,7 +82,7 @@ export default function DetailsScreen() {
         return;
     }
     
-    const userPrompt = `Ești un expert în marketing turistic. Generează un scurt "Vibe Check" (maxim 2 fraze, inspirational, cu 1-2 emoji) pentru această locație. Detalii: Nume: ${item.name}, Rating: ${item.rating}, Descriere: ${item.short_description}`;
+    const userPrompt = `Ești un expert în marketing turistic. Generează un scurt "Vibe Check" (maxim 2 fraze, inspirational, cu 1-2 emoji) pentru această locație. Detalii: Nume: ${item.name}, Categorie: ${item.category}, Rating: ${item.rating}, Descriere: ${item.short_description}`;
     
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -111,7 +135,7 @@ export default function DetailsScreen() {
   const handleShare = async () => {
     try {
       const result = await Share.share({
-        message: `Vă recomand locația: ${item.name} (${item.address}). Descriere: ${item.short_description}. Rating: ${item.rating}⭐.`,
+        message: `Vă recomand locația: ${item.name} (${item.address}). Descriere: ${item.short_description}. Rating: ${item.rating}⭐. Categorie: ${item.category}`,
         title: `Descoperă Locația: ${item.name}`
       });
 
@@ -127,7 +151,6 @@ export default function DetailsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Status Bar: Transparent și text alb. ATENȚIE: Textul se poate pierde pe imagini deschise. */}
       <StatusBar 
         barStyle="light-content" 
         translucent={true} 
@@ -150,7 +173,15 @@ export default function DetailsScreen() {
             </View>
           </View>
 
-          <Text style={styles.address}>📍 {item.address}</Text>
+          {/* Categorie */}
+          <View style={styles.categoryBadge}>
+             <Text style={styles.categoryText}>{item.category}</Text>
+          </View>
+
+          {/* ADRESA - FĂCUTĂ INTERACTIVĂ */}
+          <TouchableOpacity onPress={openMapForLocation} activeOpacity={0.7} style={styles.addressLink}>
+             <Text style={styles.address}>📍 {item.address}</Text>
+          </TouchableOpacity>
 
           {/* BUTON AI GENERATOR */}
           <TouchableOpacity 
@@ -174,7 +205,7 @@ export default function DetailsScreen() {
         </View>
       </ScrollView>
 
-      {/* Butonul de back fix, poziționat sub Status Bar */}
+      {/* Butoanele Fixe (Back, Share) și Footer (Rezervare) rămân neschimbate... */}
       <TouchableOpacity 
         style={[
           styles.fixedBackButton, 
@@ -187,7 +218,6 @@ export default function DetailsScreen() {
         <Ionicons name="arrow-back" size={24} color="#FFF" />
       </TouchableOpacity>
 
-      {/* Butonul de Share fix, poziționat pe dreapta */}
       <TouchableOpacity 
         style={[
           styles.fixedShareButton, 
@@ -201,7 +231,6 @@ export default function DetailsScreen() {
       </TouchableOpacity>
 
 
-      {/* BUTON FIX JOS - REZERVARE */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.reserveButton} onPress={handleReservation}>
           <Ionicons name="logo-whatsapp" size={24} color="#FFF" style={{ marginRight: 10 }} />
@@ -225,7 +254,6 @@ const styles = StyleSheet.create({
     width: width,
     height: 350,
     position: 'relative',
-    // Imaginea începe de sus
   },
   image: {
     width: '100%',
@@ -248,7 +276,7 @@ const styles = StyleSheet.create({
   // Stilul pentru butonul de Share FIX
   fixedShareButton: {
     position: 'absolute',
-    right: 20, // Pozitionat pe dreapta
+    right: 20, 
     width: 40,
     height: 40,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -291,10 +319,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#B45309',
   },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: TINT_COLOR_LIGHT_BG, 
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: TINT_COLOR,
+  },
+  // NOU: Stil pentru a indica că adresa este un link
+  addressLink: {
+    alignSelf: 'flex-start', // Previne extinderea pe toată lățimea
+    paddingVertical: 4, 
+    marginBottom: 16,
+  },
   address: {
     fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 20,
+    color: TINT_COLOR, // Schimbăm culoarea pentru a arăta că este interactivă
+    textDecorationLine: 'underline',
   },
   // Culoarea butonului AI actualizată la #0a7ea4 (culoarea principală/tint a aplicației)
   aiButton: {
