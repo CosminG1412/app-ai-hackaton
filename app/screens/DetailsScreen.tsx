@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  StatusBar,
-  Dimensions,
-  Linking,
-  ActivityIndicator,
-  Platform,
-  Share 
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  Linking,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  Share,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
 const { width } = Dimensions.get('window');
 
