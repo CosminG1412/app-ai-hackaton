@@ -1,6 +1,4 @@
-// cosming1412/app-ai-hackaton/app-ai-hackaton-e9aec78dc2c364af443a8ce82d907bf32556ab6c/app/screens/ChatbotScreen.tsx
-
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,13 +15,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router'; 
 
 // Importăm datele despre locații
+// Asigură-te că fișierul locatii.json este în aceeași structură de foldere
 import locationsData from './locatii.json';
 
-const LOCATIONS = locationsData;
+const LOCATIONS = locationsData as TouristLocation[]; 
 const { height } = Dimensions.get('window');
 
 const TINT_COLOR = '#0a7ea4'; 
-
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY; 
 
 // --- TIPURI DATE ---
@@ -39,7 +37,7 @@ interface TouristLocation {
   image_url: string;
   short_description: string;
   rating: number;
-  category: string; 
+  category: string;
 }
 
 interface Message {
@@ -51,6 +49,26 @@ interface Message {
 }
 
 const BOT_NAME = 'Jon';
+
+// Cuvinte cheie principale (folosite pentru a detecta intentul)
+const LOCATION_KEYWORDS = [
+  'restaurant', 'cafenea', 'cafea', 'pub', 'bar', 'pizza', 'burger', 
+  'vegan', 'sushi', 'döner', 'steakhouse', 'bistro', 'fast food', 'desert', 'club', 'lounge', 
+  'pizzerie', 'pizzarie'
+];
+
+// 🎯 MAPA DE SINONIME/SUBCATEGORII (Garantează potrivirea)
+const CATEGORY_MAP: { [key: string]: string[] } = {
+  'fast food': ['fast food', 'fastfood', 'burger', 'doner', 'döner', 'shaorma', 'kebap', 'sandvis'],
+  'cafenea': ['cafenea', 'cafea', 'cafe', 'coffee', 'coffee shop', 'patiserie', 'ceai'],
+  'cafea': ['cafenea', 'cafea', 'cafe', 'coffee', 'coffee shop', 'patiserie', 'ceai'],
+  'restaurant': ['restaurant', 'trattoria', 'steakhouse', 'bistro', 'tavern', 'asiatic', 'mexican', 'traditional', 'mancare'],
+  'pub': ['pub', 'bar', 'lounge', 'club'],
+  'bar': ['pub', 'bar', 'lounge', 'club'],
+  'pizza': ['pizza', 'pizzerie', 'pizzarie', 'italian', 'trattoria'], 
+  'pizzerie': ['pizza', 'pizzerie', 'pizzarie', 'italian', 'trattoria'],
+  'pizzarie': ['pizza', 'pizzerie', 'pizzarie', 'italian', 'trattoria'],
+};
 
 interface BotResponse {
     text: string;
@@ -67,192 +85,131 @@ const normalizeString = (str: string): string => {
     .replace(/î/g, 'i')
     .replace(/ș/g, 's')
     .replace(/ţ/g, 't')
-    .replace(/ț/g, 't');
+    .replace(/ț/g, 't')
+    .trim();
 };
 
-const extractCityFromAddress = (address: string) => {
-    const parts = address.split(',');
-    return parts[parts.length - 1].trim();
-};
-
-const extractCities = (locations: typeof LOCATIONS): string[] => {
+// --- LOGICĂ ORAȘE ---
+const extractCities = (locations: TouristLocation[]): string[] => {
   const citiesSet = new Set<string>();
-  (locations as TouristLocation[]).forEach(loc => { 
-    const city = extractCityFromAddress(loc.address);
-    citiesSet.add(city);
+  locations.forEach(loc => {
+    const parts = loc.address.split(',');
+    if (parts.length > 0) {
+      const city = parts[parts.length - 1].trim();
+      if (city) {
+        citiesSet.add(city);
+      }
+    }
   });
   return Array.from(citiesSet).sort();
 };
 
-const KNOWN_CITIES = extractCities(LOCATIONS as any);
+const KNOWN_CITIES = extractCities(LOCATIONS);
+// --- SFÂRȘIT LOGICĂ ORAȘE ---
 
-// --- LOGICĂ NOUĂ: DETERMINAREA ORAȘULUI DE CONTEXT DIN ISTORIC ---
-const getHistoricalCity = (messages: Message[]): string | undefined => {
-    const lastNMessages = messages.slice(0, 10); // Verificăm ultimele 10 mesaje
-    
-    for (const msg of lastNMessages) {
-        const normalizedText = normalizeString(msg.text);
-
-        // 1. Caută un oraș menționat explicit de UTILIZATOR
-        if (msg.sender === 'user') {
-            for (const city of KNOWN_CITIES) {
-                if (normalizedText.includes(normalizeString(city))) {
-                    return city; 
-                }
-            }
-        }
-
-        // 2. Caută un oraș recomandat de BOT (dacă a făcut o recomandare)
-        if (msg.sender === 'bot' && msg.recommendedLocations && msg.recommendedLocations.length > 0) {
-            // Ia orașul primei locații recomandate
-            const firstRecommended = msg.recommendedLocations[0];
-            return extractCityFromAddress(firstRecommended.address);
-        }
-    }
-    return undefined;
+// Funcție pentru resetarea contextului (mesaje simple)
+const isNonLocationQuery = (normalizedText: string): boolean => {
+    const chatWords = ['salut', 'buna', 'multumesc', 'ms', 'mersi', 'ce faci', 'pa', 'la revedere', 'ok', 'bine', 'mulțumesc mult'];
+    return !LOCATION_KEYWORDS.some(k => normalizedText.includes(k)) && chatWords.some(word => normalizedText.includes(word));
 };
 
-// --- LOGICĂ VECHE ACTUALIZATĂ: CONTEXT DE REZERVĂ ---
-const getDefaultContextCity = (locations: TouristLocation[]) => {
-    // Orașul cu cea mai mare rată (cel mai popular)
-    const sortedLocations = locations.sort((a, b) => b.rating - a.rating);
+// 🌟 FUNCTIE DE CĂUTARE DETERMINISTICĂ LOCALĂ (Motorul de Căutare Garantat)
+const findLocationsByKeywordAndCity = (query: string, city?: string): TouristLocation[] => {
+    const normalizedQuery = normalizeString(query);
     
-    if (sortedLocations.length > 0) {
-        return extractCityFromAddress(sortedLocations[0].address);
+    // 1. Identifică keyword-urile principale
+    const rawKeywordsFound = LOCATION_KEYWORDS.filter(keyword => normalizedQuery.includes(normalizeString(keyword)));
+    
+    if (rawKeywordsFound.length === 0) {
+        return []; 
     }
-    return 'România'; 
+    
+    // 2. Colectează TOȚI termenii de căutare asociați folosind CATEGORY_MAP
+    const searchTerms = new Set<string>();
+    rawKeywordsFound.forEach(keyword => {
+        const normalizedKeyword = normalizeString(keyword);
+        const mappedTerms = CATEGORY_MAP[normalizedKeyword] || [normalizedKeyword]; 
+        mappedTerms.forEach(term => searchTerms.add(normalizeString(term)));
+    });
+
+    // 3. Filtrare pe întregul set de date
+    const results = LOCATIONS.filter(loc => {
+        const normalizedAddress = normalizeString(loc.address);
+        const normalizedCategory = normalizeString(loc.category);
+        
+        // Criteriul 1: Orașul (dacă este specificat)
+        const cityMatch = !city || normalizedAddress.includes(normalizeString(city));
+        
+        // Criteriul 2: Categoria (potrivire pe setul extins de termeni)
+        const categoryMatch = Array.from(searchTerms).some(term => {
+            return normalizedCategory.includes(term);
+        });
+
+        return cityMatch && categoryMatch;
+    });
+
+    // 4. Sortare și limitare
+    return results.sort((a, b) => b.rating - a.rating).slice(0, 3);
 };
 
 
-// --- LOGICĂ PRINCIPALĂ DE GENERARE A RĂSPUNSULUI ---
-const generateBotResponse = async (query: string, locations: TouristLocation[], messages: Message[]): Promise<BotResponse> => {
+// 🤖 LOGICĂ LLM: Folosită pentru a genera textul final al răspunsului
+const generateBotResponse = async (userQuery: string, locationsToAnalyze: TouristLocation[]): Promise<BotResponse> => {
   
   if (!GEMINI_API_KEY) {
-      return { text: "Eroare: Cheia API nu a fost găsită. Asigură-te că fișierul .env este setat corect și că serverul Expo a fost repornit." };
+      return { text: "Eroare: Cheia API nu a fost găsită." };
   }
   
-  const typedLocations = locations as TouristLocation[];
-  const normalizedQuery = normalizeString(query);
-  let foundCityInQuery: string | undefined;
+  // 1. Pregătește contextul (trimitem LLM-ului doar lista de locații relevante găsite local)
+  const locationsForPrompt = locationsToAnalyze.length > 0 ? locationsToAnalyze : LOCATIONS.slice(0, 10);
   
-  // 1. Caută orașul explicit în query
-  for (const city of KNOWN_CITIES) {
-      if (normalizedQuery.includes(normalizeString(city))) {
-          foundCityInQuery = city; 
-          break;
-      }
-  }
-
-  // 2. Determinarea orașului de context (ORDINE DE PRIORITATE NOUĂ):
-  const historicalCity = getHistoricalCity(messages);
-  
-  const contextCity = foundCityInQuery || historicalCity || getDefaultContextCity(typedLocations);
+  const topLocationsContext = locationsForPrompt
+    .map(loc => {
+      let simplifiedCategory = normalizeString(loc.category);
+      simplifiedCategory = simplifiedCategory.replace(/[\/\-]/g, ', '); 
+      return `{name: "${loc.name}", rating: ${loc.rating}, category: "${simplifiedCategory}", city: "${loc.address.split(',').pop()?.trim()}"}`;
+    }).join('; ');
     
-  // 3. Filtrează locațiile pe baza orașului determinat
-  const contextualLocations = typedLocations.filter(loc => loc.address.includes(contextCity));
-
-  // 4. Pregătește contextul pentru LLM (Top 5 locații relevante)
-  const topLocationsContext = contextualLocations
-    .sort((a, b) => b.rating - a.rating)
-    .slice(0, 5) 
-    .map(loc => 
-      `{name: "${loc.name}", category: "${loc.category}", rating: ${loc.rating}, city: "${extractCityFromAddress(loc.address)}"}`
-    ).join('; ');
-    
-  // 5. Definirea prompt-ului cu contextualizare îmbunătățită
-  // NOU: Instrucțiunile sunt mult mai detaliate, punând accentul pe conversație și non-tranzacționalism
-  const systemInstruction = `Ești un asistent AI prietenos, dar concis, specializat în recomandări de locații.
-Obiectivul tău este să oferi cea mai bună experiență de conversație.
-1. **Dacă cererea NU este despre recomandări de locuri (ex: "salut", "ce mai faci", "mersi"), răspunde natural și scurt, fără a oferi o listă de locații.**
-2. **Dacă cererea este despre locuri (ex: "unde mananc", "vreau o cafea", "cluburi"), oferă o recomandare** și evită să folosești fraze generice de început ca "Desigur", "Absolut" sau "Iată recomandările". Începe răspunsul direct și firesc.
-3. Contextul implicit determinat pentru localizare este: ${contextCity}. Prioritizează locațiile din acest oraș.
-4. Structura recomandării: nume complet, categoria, rating.
-`;
+  const systemInstruction = `Ești un asistent AI specializat în recomandări de locații. Răspunde direct și concis, folosind o formulare naturală. Analizează cererea: "${userQuery}". Dacă ai primit locații în lista de date, folosește-le pentru a formula o recomandare de top (menționează numele și ratingul). Dacă lista de date este goală, răspunde politicos că nu ai găsit nimic. Nu inventa informații.`;
   
-  // Am inclus instrucțiunea de sistem direct în prompt (contents) pentru a ne asigura că este citită
-  const userPrompt = `${systemInstruction} Cererea utilizatorului: "${query}". Folosește următoarele date: [${topLocationsContext}]`;
+  const userPrompt = `${systemInstruction} Date de analizat: [${topLocationsContext}]`;
 
-  // 6. APEL API REAL LLM
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-        generationConfig: { 
-            temperature: 0.5, // NOU: Mărim temperatura pentru un ton mai natural, mai puțin mecanic
-        },
+        generationConfig: { temperature: 0.2 },
       }),
     });
 
     const data = await response.json();
+    const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Ne pare rău, a fost o eroare la generarea răspunsului LLM.";
     
-    // ... (Logica de verificare erori)
-    if (!response.ok) {
-        const errorMessage = data?.error?.message || `Eroare HTTP necunoscută: ${response.status} ${response.statusText}`;
-        console.error("API Error:", data);
-        return { 
-            text: `Eroare API (${response.status}): ${errorMessage}. Verifică cheia API și permisiunile proiectului.`,
-            locations: []
-        };
-    }
-    
-    const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!generatedText) {
-        let rejectionReason = "Răspuns gol. Conținutul ar fi putut fi blocat din motive de siguranță sau problemă de generare.";
-        
-        const safetyRatings = data.candidates?.[0]?.safetyRatings;
-        if (safetyRatings) {
-             rejectionReason += ` (Safety Issue: ${JSON.stringify(safetyRatings)})`;
-        }
-
-        return {
-            text: `LLM-ul nu a putut genera un răspuns valid. Motiv: ${rejectionReason}`,
-            locations: []
-        };
-    }
-
-    // 7. LOGICĂ DE PARSARE ȘI RECOMANDARE (Rulăm logica doar dacă textul generat pare să conțină o recomandare)
-    let recommended: TouristLocation[] = [];
-    
-    // O logică simplă pentru a determina dacă răspunsul conține o recomandare:
-    const isRecommendationResponse = typedLocations.some(loc => generatedText.includes(loc.name));
-
-    if (isRecommendationResponse) {
-        for (const loc of typedLocations) { 
-            if (generatedText.includes(loc.name)) {
-                recommended.push(loc);
-                if (recommended.length >= 3) break; 
-            }
-        }
-    }
-    
-    return {
-      text: generatedText,
-      locations: recommended,
-    };
+    return { text: generatedText, locations: locationsToAnalyze };
     
   } catch (error) {
-    console.error("Eroare la apelul LLM:", error);
-    return { text: `Ne pare rău, a apărut o eroare la rețea. Mesaj: ${error.message}` };
+    return { text: `A apărut o eroare la comunicarea cu serverul AI.`, locations: locationsToAnalyze };
   }
 };
 
-// --- COMPONENTĂ PRINCIPALĂ (Rămâne neschimbată) ---
-export default function ChatbotScreen() { 
+// --- COMPONENTĂ PRINCIPALĂ ---
+export default function ChatbotScreen() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '0',
-      text: `Salut! Sunt ${BOT_NAME}, asistentul tău personal. Întreabă-mă despre locațiile din aplicație. De exemplu: "Unde pot să mănânc o pizza în Timișoara?"`,
+      text: `Salut! Sunt ${BOT_NAME}. Asistentul tău AI pentru a găsi locația perfectă oriunde în țară.`,
       sender: 'bot',
       timestamp: new Date().toLocaleTimeString(),
     },
   ]);
   const [inputText, setInputText] = useState('');
   
+  // Context persistent
+  const [lastIntent, setLastIntent] = useState(''); 
+  const [lastCity, setLastCity] = useState(''); 
+
   const navigateToDetails = useCallback((location: TouristLocation) => {
     router.push({
         pathname: "/screens/DetailsScreen",
@@ -260,35 +217,136 @@ export default function ChatbotScreen() {
     });
   }, []);
 
-  const handleSend = useCallback(async () => { 
+  const handleSend = useCallback(async () => {
     if (!inputText.trim()) return;
 
     const textToSend = inputText.trim();
     setInputText(''); 
 
+    const normalizedText = normalizeString(textToSend);
+    
+    // 1. Detectează starea curentă
+    let currentCity: string | undefined;
+    for (const city of KNOWN_CITIES) {
+        if (normalizedText.includes(normalizeString(city))) {
+            currentCity = city; 
+            break;
+        }
+    }
+    const isLocationQuery = LOCATION_KEYWORDS.some(keyword => normalizedText.includes(normalizeString(keyword)));
+    const isCityQuery = !!currentCity;
+
+    let searchIntent = ''; 
+    let searchCity = '';
+    let queryForLLM = textToSend;
+    let newIntent = lastIntent;
+    let newCity = lastCity;
+    
+    // --- LOGICĂ DE APLICARE A CONTEXTULUI ---
+    
+    if (isNonLocationQuery(normalizedText)) {
+        // Resetare context la mesaje simple (Multumesc, Salut)
+        newIntent = '';
+        newCity = '';
+        queryForLLM = "Răspunde politicos la mesajul: " + textToSend;
+        
+    } else if (isLocationQuery && isCityQuery) {
+        // SCENARIU 1: Query Complet (Pizza în Iași)
+        searchIntent = textToSend;
+        searchCity = currentCity!;
+        newIntent = textToSend; 
+        newCity = currentCity!;
+        queryForLLM = `Recomandări pentru ${textToSend} în ${currentCity}`;
+        
+    } else if (isCityQuery) {
+        // SCENARIU 2: Doar Oraș (în Cluj / Cluj-Napoca)
+        searchCity = currentCity!;
+        newCity = currentCity!;
+        if (lastIntent) {
+            // Aplică Intentul Vechi (ex: "în Cluj" după "pub")
+            searchIntent = lastIntent;
+            queryForLLM = `Recomandări pentru ${lastIntent} în ${currentCity}`;
+        } else {
+            // Doar schimbă orașul. LLM-ul va răspunde cu o confirmare.
+            queryForLLM = `Confirmă schimbarea orașului la ${currentCity} și întreabă ce tip de locație este căutat.`;
+            newIntent = ''; 
+        }
+        
+    } else if (isLocationQuery) {
+        // SCENARIU 3: Doar Locație (Vreau un pub)
+        searchIntent = textToSend;
+        newIntent = textToSend;
+        
+        if (lastCity) {
+            // Aplică Orașul Vechi (ex: "pub" cu lastCity = Brașov)
+            searchCity = lastCity;
+            queryForLLM = `Recomandări pentru ${textToSend} în ${lastCity}`;
+        } else {
+            // Fără oraș: Prompt pentru oraș (se rulează LLM-ul cu instrucțiunea de prompt)
+            queryForLLM = `Utilizatorul caută "${textToSend}" dar nu a specificat orașul. Roagă-l politicos să specifice orașul pentru a putea face o căutare precisă.`;
+        }
+    } else {
+        // SCENARIU 4: Follow-up sau Query General necunoscut
+        searchIntent = lastIntent; 
+        searchCity = lastCity; 
+        queryForLLM = `Răspunde la mesajul: "${textToSend}", utilizând ca referință contextul: ${lastIntent || 'niciun intent'} în ${lastCity || 'niciun oraș'}.`;
+    }
+
+    // 2. Actualizează Starea și adaugă mesajul Utilizatorului
+    setLastIntent(newIntent);
+    setLastCity(newCity);
+    
     const newUserMessage: Message = {
       id: Date.now().toString(),
-      text: textToSend, 
+      text: textToSend,
       sender: 'user',
       timestamp: new Date().toLocaleTimeString(),
     };
-
     setMessages(prev => [newUserMessage, ...prev]);
 
-    // Mesajele sunt trimise corect la funcția de generare
-    const botResponse = await generateBotResponse(textToSend, LOCATIONS as any, messages); 
+
+    // 3. RULARE CĂUTARE DETERMINISTICĂ LOCALĂ
+    const filteredLocations = (searchIntent && searchCity) 
+        ? findLocationsByKeywordAndCity(searchIntent, searchCity)
+        : (searchIntent && !searchCity) 
+        ? findLocationsByKeywordAndCity(searchIntent)
+        : [];
+        
+
+    // 4. APEL LLM PENTRU GENERAREA RĂSPUNSULUI TEXTUAL
+    let botResponse: BotResponse;
     
+    if (filteredLocations.length > 0) {
+        // S-a găsit ceva local: Trimitem LLM-ului lista GARANTATĂ pentru a o descrie.
+        botResponse = await generateBotResponse(queryForLLM, filteredLocations);
+        botResponse.locations = filteredLocations; 
+    } else if (isLocationQuery && !searchCity && !lastCity) {
+        // Scenariul 3: Prompt pentru oraș (LLM-ul generează textul de prompt)
+        botResponse = await generateBotResponse(queryForLLM, []);
+    }
+     else {
+        // Query general sau locație/oraș inexistent (LLM-ul analizează și răspunde)
+        const contextLocations = KNOWN_CITIES.some(c => queryForLLM.includes(c)) 
+            ? LOCATIONS.filter(loc => loc.address.includes(currentCity || lastCity || '')) 
+            : LOCATIONS.slice(0, 10);
+            
+        botResponse = await generateBotResponse(queryForLLM, contextLocations);
+        botResponse.locations = []; 
+    }
+    
+    // 5. Creează și adaugă noul mesaj al bot-ului
     const newBotMessage: Message = {
       id: (Date.now() + 1).toString(),
       text: botResponse.text,
       sender: 'bot',
       timestamp: new Date().toLocaleTimeString(),
-      recommendedLocations: botResponse.locations, 
+      recommendedLocations: botResponse.locations,
     };
 
     setMessages(prev => [newBotMessage, ...prev]);
-  }, [inputText, messages]); 
+  }, [inputText, lastIntent, lastCity]); 
 
+  // --- RENDERIZARE MESAJ ---
   const renderMessage = ({ item }: { item: Message }) => (
     <View style={[
       styles.messageContainer,
@@ -318,10 +376,10 @@ export default function ChatbotScreen() {
                     <TouchableOpacity
                         key={index}
                         style={styles.detailsButton}
-                        onPress={() => navigateToDetails(loc as any)}
+                        onPress={() => navigateToDetails(loc)}
                     >
                         <Text style={styles.detailsButtonText}>
-                          {loc.name}
+                          {loc.name} (Rating: {loc.rating})
                         </Text>
                         <Ionicons name="arrow-forward" size={14} color={TINT_COLOR} />
                     </TouchableOpacity>
@@ -341,7 +399,7 @@ export default function ChatbotScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Asistent AI Locații</Text>
-        <Text style={styles.headerSubtitle}>Vă ajut cu sugestii bazate pe datele aplicației.</Text>
+        <Text style={styles.headerSubtitle}>Descoperă locurile ideale cu ajutorul AI.</Text>
       </View>
 
       <FlatList
@@ -362,7 +420,7 @@ export default function ChatbotScreen() {
             style={styles.input}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Întreabă-mă ceva..."
+            placeholder="Ex: fast food în Timișoara"
             placeholderTextColor="#9CA3AF"
             returnKeyType="send"
             onSubmitEditing={handleSend}
@@ -377,9 +435,10 @@ export default function ChatbotScreen() {
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
-}
+  ); 
+} 
 
+// --- STYLING ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -484,6 +543,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // STILURI PENTRU LINK-URILE RECOMANDATE
   recommendedLinksContainer: {
     marginTop: 10,
     paddingTop: 10,
@@ -494,7 +554,7 @@ const styles = StyleSheet.create({
   recommendedLinksTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: TINT_COLOR,
+    color: '#7C3AED',
     marginBottom: 4,
   },
   detailsButton: {

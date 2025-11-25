@@ -2,7 +2,7 @@
 [
   {
     "name": "The Literary Coffee House 'Citadel'",
-    "address": "Str. Academiei, Nr. 15, Bucharest",
+    "address": "Str. Academiei, Nr. 15, Bucuresti",
     "coordinates": { "lat": 44.4363, "long": 26.1018 },
     "image_url": "https://images.unsplash.com/photo-1435224654926-ecc9f7fa028c",
     "short_description": "A quiet place, ideal for reading and study sessions. Excellent espresso.",
@@ -47,12 +47,12 @@
   },
   {
     "name": "Vegan Restaurant 'The Green Garden'",
-    "address": "Splaiul Independenței, Nr. 300, Bucharest",
+    "address": "Splaiul Independenței, Nr. 300, Bucuresti",
     "coordinates": { "lat": 44.4379, "long": 26.0463 },
     "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
     "short_description": "Healthy, plant-based options. Fresh smoothies and delicious cream soups.",
     "rating": 4.9,
-    "category": "Cafea/Ceai"
+    "category": "Asiatic/Mexican"
   },
   {
     "name": "Coffee Shop 'By The Faculty'",
@@ -65,7 +65,7 @@
   },
   {
     "name": "Burger Shack",
-    "address": "Calea Moșilor, Nr. 250, Bucharest",
+    "address": "Calea Moșilor, Nr. 250, Bucuresti",
     "coordinates": { "lat": 44.4449, "long": 26.1103 },
     "image_url": "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
     "short_description": "The best artisanal burgers in town, featuring Black Angus beef.",
