@@ -144,11 +144,6 @@ app/
  │     └── locations.json
  └── components/
 
-▶️ Instalare & rulare
-git clone https://github.com/...
-cd app-ai-hackaton
-npm install
-npx expo start
 
 🌟 Ce aduce aplicația?
 
