@@ -28,7 +28,7 @@ const { width } = Dimensions.get('window');
 const TINT_COLOR = '#0a7ea4'; 
 const TINT_COLOR_LIGHT_BG = '#E5F6F8'; // O variantă foarte deschisă
 
-// --- TIPURI DATE ---
+// --- TIPURI DATE (ACTUALIZAT) ---
 interface Coordinates {
   lat: number;
   long: number;
@@ -41,10 +41,24 @@ interface TouristLocation {
   image_url: string;
   short_description: string;
   rating: number;
+  category: string; // NOU
 }
 
 // Transformăm datele
 const LOCATIONS: TouristLocation[] = locationsData as TouristLocation[];
+
+// NOU: Funcție helper pentru a standardiza numele orașelor (rezolvare bug anterior)
+const standardizeCity = (city: string): string => {
+  if (!city) return '';
+  const lowerCity = city.toLowerCase().trim();
+  // Standardizează ambele variante (engleză/română) la 'București' pentru a uni filtrele.
+  if (lowerCity === 'bucharest' || lowerCity === 'bucurești') {
+    return 'București'; 
+  }
+  // Returnează orașul (trimmed) pentru alte locații
+  return city.trim();
+};
+
 
 export default function ExploreScreen() {
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
@@ -53,36 +67,59 @@ export default function ExploreScreen() {
   // --- STATE PENTRU FILTRE ---
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>('Toate');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Toate'); // NOU
   const [minRating, setMinRating] = useState<number>(0);
 
-  // --- LOGICA PENTRU EXTRAGERE ORAȘE ---
+  // --- LOGICA PENTRU EXTRAGERE CATEGORII (NOU) ---
+  const availableCategories = useMemo(() => {
+    const categoriesSet = new Set<string>();
+    LOCATIONS.forEach(loc => {
+        if (loc.category) {
+            categoriesSet.add(loc.category);
+        }
+    });
+    // Sortăm alfabetic categoriile extrase
+    return ['Toate', ...Array.from(categoriesSet).sort()];
+  }, []);
+    
+  // --- LOGICA PENTRU EXTRAGERE ORAȘE (CORIJATĂ) ---
   const availableCities = useMemo(() => {
     const citiesSet = new Set<string>();
     LOCATIONS.forEach(loc => {
       const parts = loc.address.split(',');
       if (parts.length > 0) {
         // Presupune că orașul este ultima parte după virgulă
-        const city = parts[parts.length - 1].trim();
-        if (city) citiesSet.add(city);
+        const rawCity = parts[parts.length - 1];
+        if (rawCity) {
+          const city = standardizeCity(rawCity); // Folosim standardizarea
+          citiesSet.add(city);
+        }
       }
     });
     return ['Toate', ...Array.from(citiesSet).sort()];
   }, []);
 
-  // --- LOGICA DE FILTRARE PRINCIPALĂ ---
+  // --- LOGICA DE FILTRARE PRINCIPALĂ (ACTUALIZATĂ) ---
   const filteredLocations = LOCATIONS.filter(loc => {
     // 1. Căutare text
     const matchesSearch = 
       loc.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
       loc.address.toLowerCase().includes(searchQuery.toLowerCase());
 
+    // --- Extrage și standardizează orașul locației curente ---
+    const rawLocationCity = loc.address.split(',').pop()?.trim() || '';
+    const locationCity = standardizeCity(rawLocationCity);
+    
     // 2. Filtru Oraș
-    const matchesCity = selectedCity === 'Toate' || loc.address.includes(selectedCity);
+    const matchesCity = selectedCity === 'Toate' || locationCity === selectedCity;
 
-    // 3. Filtru Rating
+    // 3. Filtru Categorie (NOU)
+    const matchesCategory = selectedCategory === 'Toate' || loc.category === selectedCategory;
+
+    // 4. Filtru Rating
     const matchesRating = loc.rating >= minRating;
 
-    return matchesSearch && matchesCity && matchesRating;
+    return matchesSearch && matchesCity && matchesCategory && matchesRating; // Adaugă matchesCategory
   });
 
  const renderListItem = ({ item }: { item: TouristLocation }) => (
@@ -109,6 +146,12 @@ export default function ExploreScreen() {
         </View>
 
         <Text style={styles.cardAddress}>📍 {item.address}</Text>
+        
+        {/* Adaugă Category Badge */}
+        <View style={styles.categoryBadge}>
+            <Ionicons name="pricetag" size={12} color={TINT_COLOR} />
+            <Text style={styles.categoryText}>{item.category}</Text>
+        </View>
 
         <Text style={styles.cardDesc} numberOfLines={2}>
           {item.short_description}
@@ -141,6 +184,16 @@ export default function ExploreScreen() {
           .custom-popup b { font-size: 15px; color: #111827; display: block; margin-bottom: 4px; }
           .custom-popup p { font-size: 13px; color: #6B7280; margin: 0; }
           .cta-text { color: ${TINT_COLOR}; font-size: 12px; font-weight: bold; margin-top: 6px !important; display: block; }
+          .category-tag { /* NEW STYLE ADDED */
+            display: inline-block;
+            background-color: ${TINT_COLOR_LIGHT_BG};
+            color: ${TINT_COLOR};
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 6px;
+            border-radius: 5px;
+            margin-bottom: 4px;
+          }
         </style>
       </head>
       <body>
@@ -172,6 +225,7 @@ export default function ExploreScreen() {
             if(loc.coordinates && loc.coordinates.lat && loc.coordinates.long) {
               // Creăm conținut HTML cu onclick
               var content = '<div class="custom-popup" onclick="handlePopupClick(' + index + ')">' + 
+                            '<span class="category-tag">' + loc.category + '</span>' + // MODIFIED LINE
                             '<b>' + loc.name + '</b>' + 
                             '<p>⭐ ' + loc.rating + '</p>' +
                             '<span class="cta-text">Vezi detalii &rarr;</span>' +
@@ -238,13 +292,15 @@ export default function ExploreScreen() {
         </View>
 
         <TouchableOpacity 
-          style={[styles.iconButton, (selectedCity !== 'Toate' || minRating > 0) && styles.iconButtonActive]} 
+          // Adaugă selectedCategory la logica de evidențiere a butonului de filtru
+          style={[styles.iconButton, (selectedCity !== 'Toate' || selectedCategory !== 'Toate' || minRating > 0) && styles.iconButtonActive]} 
           onPress={() => setIsFilterVisible(true)}
         >
           <Ionicons 
+            // Adaugă selectedCategory la logica de evidențiere a butonului de filtru
             name="options" 
             size={20} 
-            color={(selectedCity !== 'Toate' || minRating > 0) ? "#FFF" : "#333"} 
+            color={(selectedCity !== 'Toate' || selectedCategory !== 'Toate' || minRating > 0) ? "#FFF" : "#333"} 
           />
         </TouchableOpacity>
 
@@ -284,25 +340,22 @@ export default function ExploreScreen() {
         )}
       </View>
 
-      {/* MODAL FILTRARE (CU FADE-IN ȘI ÎNCHIDERE LA APĂSAREA FUNDALULUI) */}
+      {/* MODAL FILTRARE (ACTUALIZAT) */}
       <Modal
-        // 🚨 MODIFICAREA: Folosim 'fade' pentru o tranziție mai fină
         animationType="fade"
         transparent={true}
         visible={isFilterVisible}
         onRequestClose={() => setIsFilterVisible(false)}
       >
-        {/* TouchableOpacity pentru a gestiona apăsarea fundalului */}
         <TouchableOpacity 
           style={styles.modalOverlay}
           activeOpacity={1} 
-          onPress={() => setIsFilterVisible(false)} // Închide modalul la apăsarea fundalului
+          onPress={() => setIsFilterVisible(false)}
         >
-          {/* View-ul de conținut care blochează propagarea evenimentului */}
           <View 
             style={styles.modalContent}
             onStartShouldSetResponder={() => true} 
-            onResponderRelease={(e) => e.stopPropagation()} // Oprește închiderea la apăsarea conținutului
+            onResponderRelease={(e) => e.stopPropagation()}
           >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Filtrează</Text>
@@ -312,6 +365,24 @@ export default function ExploreScreen() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
+              {/* --- SECȚIUNE NOUĂ: FILTRU CATEGORII --- */}
+              <Text style={styles.filterLabel}>Alege Categoria</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
+                {availableCategories.map((category) => (
+                  <TouchableOpacity
+                    key={category}
+                    style={[styles.chip, selectedCategory === category && styles.chipActive]}
+                    onPress={() => setSelectedCategory(category)}
+                  >
+                    <Text style={[styles.chipText, selectedCategory === category && styles.chipTextActive]}>
+                      {category}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              {/* --- SFÂRȘIT SECȚIUNE CATEGORII --- */}
+
+
               <Text style={styles.filterLabel}>Alege Orașul</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
                 {availableCities.map((city) => (
@@ -349,6 +420,7 @@ export default function ExploreScreen() {
                 style={styles.resetButton}
                 onPress={() => {
                   setSelectedCity('Toate');
+                  setSelectedCategory('Toate'); // RESET NOU
                   setMinRating(0);
                 }}
               >
@@ -505,6 +577,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: '#B45309',
+  },
+  // NOU: Stil pentru Category Badge
+  categoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: TINT_COLOR_LIGHT_BG,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  categoryText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: TINT_COLOR,
   },
   cardAddress: {
     fontSize: 13,
