@@ -184,6 +184,16 @@ export default function ExploreScreen() {
           .custom-popup b { font-size: 15px; color: #111827; display: block; margin-bottom: 4px; }
           .custom-popup p { font-size: 13px; color: #6B7280; margin: 0; }
           .cta-text { color: ${TINT_COLOR}; font-size: 12px; font-weight: bold; margin-top: 6px !important; display: block; }
+          .category-tag { /* NEW STYLE ADDED */
+            display: inline-block;
+            background-color: ${TINT_COLOR_LIGHT_BG};
+            color: ${TINT_COLOR};
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 6px;
+            border-radius: 5px;
+            margin-bottom: 4px;
+          }
         </style>
       </head>
       <body>
@@ -215,6 +225,7 @@ export default function ExploreScreen() {
             if(loc.coordinates && loc.coordinates.lat && loc.coordinates.long) {
               // Creăm conținut HTML cu onclick
               var content = '<div class="custom-popup" onclick="handlePopupClick(' + index + ')">' + 
+                            '<span class="category-tag">' + loc.category + '</span>' + // MODIFIED LINE
                             '<b>' + loc.name + '</b>' + 
                             '<p>⭐ ' + loc.rating + '</p>' +
                             '<span class="cta-text">Vezi detalii &rarr;</span>' +

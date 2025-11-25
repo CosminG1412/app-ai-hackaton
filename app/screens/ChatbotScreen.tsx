@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   SafeAreaView,
   Dimensions,
+  ActivityIndicator, // <--- ADĂUGAT
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router'; 
@@ -46,6 +47,7 @@ interface Message {
   sender: 'user' | 'bot';
   timestamp: string;
   recommendedLocations?: TouristLocation[]; 
+  isLoading?: boolean; // <--- MODIFICARE: Flag pentru starea de încărcare
 }
 
 const BOT_NAME = 'Jon';
@@ -190,7 +192,8 @@ const generateBotResponse = async (userQuery: string, locationsToAnalyze: Touris
     return { text: generatedText, locations: locationsToAnalyze };
     
   } catch (error) {
-    return { text: `A apărut o eroare la comunicarea cu serverul AI.`, locations: locationsToAnalyze };
+    const err = error as Error; // <--- MODIFICARE MINORĂ PENTRU EROARE CONSISTENTĂ
+    return { text: `A apărut o eroare la comunicarea cu serverul AI. Mesaj: ${err.message}`, locations: locationsToAnalyze };
   }
 };
 
@@ -199,7 +202,7 @@ export default function ChatbotScreen() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '0',
-      text: `Salut! Sunt ${BOT_NAME}. Asistentul tău AI pentru a găsi locația perfectă oriunde în țară.`,
+      text: `Salut! Sunt ${BOT_NAME}. Asistentul tău AI pentru a găsi locația perfectă oriunde în țară`,
       sender: 'bot',
       timestamp: new Date().toLocaleTimeString(),
     },
@@ -209,6 +212,9 @@ export default function ChatbotScreen() {
   // Context persistent
   const [lastIntent, setLastIntent] = useState(''); 
   const [lastCity, setLastCity] = useState(''); 
+  
+  // <--- ADĂUGAT: Stare pentru a gestiona încărcarea
+  const [isBotLoading, setIsBotLoading] = useState(false); 
 
   const navigateToDetails = useCallback((location: TouristLocation) => {
     router.push({
@@ -218,14 +224,15 @@ export default function ChatbotScreen() {
   }, []);
 
   const handleSend = useCallback(async () => {
-    if (!inputText.trim()) return;
+    // MODIFICARE: Prevenirea trimiterii multiple în timpul încărcării
+    if (!inputText.trim() || isBotLoading) return; 
 
     const textToSend = inputText.trim();
     setInputText(''); 
 
     const normalizedText = normalizeString(textToSend);
     
-    // 1. Detectează starea curentă
+    // 1. LOGICĂ DE DETECTARE ȘI CONTEXT
     let currentCity: string | undefined;
     for (const city of KNOWN_CITIES) {
         if (normalizedText.includes(normalizeString(city))) {
@@ -292,7 +299,7 @@ export default function ChatbotScreen() {
         queryForLLM = `Răspunde la mesajul: "${textToSend}", utilizând ca referință contextul: ${lastIntent || 'niciun intent'} în ${lastCity || 'niciun oraș'}.`;
     }
 
-    // 2. Actualizează Starea și adaugă mesajul Utilizatorului
+    // 2. Adaugă mesajul Utilizatorului + Mesajul de ÎNCĂRCARE
     setLastIntent(newIntent);
     setLastCity(newCity);
     
@@ -302,39 +309,55 @@ export default function ChatbotScreen() {
       sender: 'user',
       timestamp: new Date().toLocaleTimeString(),
     };
-    setMessages(prev => [newUserMessage, ...prev]);
+    
+    const loadingMessageId = 'loading-temp-' + Date.now(); 
+    const loadingMessage: Message = {
+        id: loadingMessageId,
+        text: "Jon se gândește…", 
+        sender: 'bot',
+        timestamp: new Date().toLocaleTimeString(),
+        isLoading: true, // <--- ADAUGARE
+    };
 
-
+    setMessages(prev => [loadingMessage, newUserMessage, ...prev]); // <--- ADAUGARE: Inserare loading message
+    setIsBotLoading(true); // <--- ADAUGARE: Pornire loading
+    
     // 3. RULARE CĂUTARE DETERMINISTICĂ LOCALĂ
-    const filteredLocations = (searchIntent && searchCity) 
-        ? findLocationsByKeywordAndCity(searchIntent, searchCity)
-        : (searchIntent && !searchCity) 
-        ? findLocationsByKeywordAndCity(searchIntent)
-        : [];
-        
+    let filteredLocations: TouristLocation[] = [];
+    if (searchIntent && searchCity) {
+        filteredLocations = findLocationsByKeywordAndCity(searchIntent, searchCity);
+    } else if (searchIntent && !searchCity && lastCity) {
+        // Căutare cu intent nou și oraș vechi
+        filteredLocations = findLocationsByKeywordAndCity(searchIntent, lastCity);
+    } else if (searchIntent && !searchCity && !lastCity) {
+        // Căutare generală (se așteaptă prompt pentru oraș de la LLM)
+    } else {
+        // Query general sau follow-up
+        const contextCity = currentCity || lastCity;
+        if (contextCity) {
+            filteredLocations = LOCATIONS.filter(loc => loc.address.includes(contextCity)).slice(0, 3);
+        }
+    }
+
 
     // 4. APEL LLM PENTRU GENERAREA RĂSPUNSULUI TEXTUAL
     let botResponse: BotResponse;
     
     if (filteredLocations.length > 0) {
-        // S-a găsit ceva local: Trimitem LLM-ului lista GARANTATĂ pentru a o descrie.
         botResponse = await generateBotResponse(queryForLLM, filteredLocations);
         botResponse.locations = filteredLocations; 
     } else if (isLocationQuery && !searchCity && !lastCity) {
-        // Scenariul 3: Prompt pentru oraș (LLM-ul generează textul de prompt)
         botResponse = await generateBotResponse(queryForLLM, []);
-    }
-     else {
-        // Query general sau locație/oraș inexistent (LLM-ul analizează și răspunde)
+    } else {
         const contextLocations = KNOWN_CITIES.some(c => queryForLLM.includes(c)) 
             ? LOCATIONS.filter(loc => loc.address.includes(currentCity || lastCity || '')) 
             : LOCATIONS.slice(0, 10);
             
         botResponse = await generateBotResponse(queryForLLM, contextLocations);
-        botResponse.locations = []; 
+        botResponse.locations = filteredLocations; // Folosim locațiile găsite (chiar dacă e 0)
     }
     
-    // 5. Creează și adaugă noul mesaj al bot-ului
+    // 5. Creează și adaugă noul mesaj al bot-ului (înlocuind mesajul de încărcare)
     const newBotMessage: Message = {
       id: (Date.now() + 1).toString(),
       text: botResponse.text,
@@ -343,21 +366,50 @@ export default function ChatbotScreen() {
       recommendedLocations: botResponse.locations,
     };
 
-    setMessages(prev => [newBotMessage, ...prev]);
-  }, [inputText, lastIntent, lastCity]); 
+    setMessages(prev => {
+        // Filtram mesajul de încărcare și adăugăm răspunsul real
+        const filteredMessages = prev.filter(msg => msg.id !== loadingMessageId);
+        return [newBotMessage, ...filteredMessages];
+    });
 
-  // --- RENDERIZARE MESAJ ---
-  const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[
-      styles.messageContainer,
-      item.sender === 'user' ? styles.userMessageContainer : styles.botMessageContainer,
-    ]}>
-      {item.sender === 'bot' && (
+    // 6. Finalizare
+    setIsBotLoading(false);
+  }, [inputText, lastIntent, lastCity, isBotLoading]); // <--- MODIFICARE: Adăugarea isBotLoading în dependencies
+
+  // --- RENDERIZARE MESAJ (MODIFICATĂ) ---
+  const renderMessage = ({ item }: { item: Message }) => {
+    const isUser = item.sender === 'user';
+    const isBot = item.sender === 'bot';
+    
+    // MODIFICARE: Logica de afișare a stării de încărcare
+    if (item.isLoading) {
+        return (
+            <View style={[styles.messageContainer, styles.botMessageContainer]}>
+                <Ionicons name="sparkles" size={20} color={TINT_COLOR} style={styles.botIcon} />
+                <View style={[styles.messageContent, { flex: 1 }]}>
+                    <Text style={[styles.senderName, { color: TINT_COLOR }]}>{BOT_NAME}</Text>
+                    <View style={styles.loadingContainer}>
+                        <Text style={styles.messageText}>Jon se gândește… </Text>
+                        <ActivityIndicator size="small" color={TINT_COLOR} />
+                    </View>
+                    <Text style={styles.timestamp}>{item.timestamp}</Text>
+                </View>
+            </View>
+        );
+    }
+    
+    return (
+      <View style={[
+        styles.messageContainer,
+        isUser ? styles.userMessageContainer : styles.botMessageContainer,
+      ]}>
+      {isBot && (
          <Ionicons name="sparkles" size={20} color={TINT_COLOR} style={styles.botIcon} />
       )}
+      {/* Aplică flex: 1 pentru ca messageContent să ocupe spațiul rămas, rezolvând problema de wrap */}
       <View style={[
         styles.messageContent,
-        item.sender === 'bot' && { flex: 1 } 
+        isBot && { flex: 1 } 
       ]}>
         <Text style={[
             styles.senderName, 
@@ -394,6 +446,7 @@ export default function ChatbotScreen() {
       </View>
     </View>
   );
+}; // SFÂRȘIT renderMessage
 
   return ( 
     <SafeAreaView style={styles.container}>
@@ -420,15 +473,18 @@ export default function ChatbotScreen() {
             style={styles.input}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Ex: fast food în Timișoara"
+            // MODIFICARE: Placeholder dinamic
+            placeholder={isBotLoading ? "Așteaptă răspunsul AI..." : "Întreabă"}
             placeholderTextColor="#9CA3AF"
             returnKeyType="send"
             onSubmitEditing={handleSend}
+            editable={!isBotLoading} // MODIFICARE: Dezactivat la încărcare
             />
             <TouchableOpacity 
-                style={styles.sendButton} 
+                // MODIFICARE: Stil dinamic pentru dezactivare
+                style={[styles.sendButton, (!inputText.trim() || isBotLoading) && styles.sendButtonDisabled]} 
                 onPress={handleSend} 
-                disabled={!inputText.trim()}
+                disabled={!inputText.trim() || isBotLoading} // MODIFICARE: Dezactivat la încărcare
             >
                 <Ionicons name="send" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -542,6 +598,16 @@ const styles = StyleSheet.create({
     backgroundColor: TINT_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // ADĂUGAT: Stil pentru butonul dezactivat
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  // ADĂUGAT: Container pentru indicatorul de încărcare
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 5,
   },
   // STILURI PENTRU LINK-URILE RECOMANDATE
   recommendedLinksContainer: {
