@@ -7,9 +7,9 @@ Aplicația combină o interfață intuitivă cu un asistent AI puternic, generar
 
 👥 Echipă
 
-Groza Cosmin — Mobile Developer, AI Integration
+Groza Cosmin — Anul 3 CTI
 
-Robert Andone — Mobile Developer, UI/UX
+Robert Andone — Anul 3 CTI
 
 🤖 Tehnologii & AI
 
