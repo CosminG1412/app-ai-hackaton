@@ -2,7 +2,7 @@
 
 # 🌄 Explorează România — Aplicație Mobilă cu AI
 
-Explorează România este o aplicație mobilă modernă, construită pentru hackathonul 2025, ce ajută utilizatorii să descopere locații din România într-un mod inteligent, rapid și personalizat.
+Explorează România este o aplicație mobilă modernă, construită pentru Hackathonul AI 2025, ce ajută utilizatorii să descopere locații din România într-un mod inteligent, rapid și personalizat.
 Aplicația combină o interfață intuitivă cu un asistent AI puternic, generare de „vibe” pentru locații, căutare rapidă, vizualizare pe hartă și funcții sociale precum rezervare directă pe WhatsApp.
 
 👥 Echipă
