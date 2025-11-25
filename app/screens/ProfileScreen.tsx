@@ -1,29 +1,33 @@
-import React from "react";
-import { Image, StyleSheet, View, ScrollView } from "react-native";
-import { Ionicons } from '@expo/vector-icons';
-import { Platform } from 'react-native'; 
+// app/screens/ProfileScreen.tsx - RESTAURAT + LOGOUT FUNCȚIONAL
 
-import { ThemedView } from "@/components/themed-view";
+import { Ionicons } from '@expo/vector-icons';
+import React from "react";
+import { Button, Image, Platform, ScrollView, StyleSheet, View } from "react-native";
+
 import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from '@/constants/theme';
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { Colors } from '@/constants/theme'; 
+// IMPORT CORECT: Folosim alias-ul de root pentru useAuth
+import { useAuth } from '@/hooks/use-auth';
 
 // Calculează spațiul de siguranță (notch/status bar) + spațiul suplimentar cerut
-// 50px pentru iOS / 30px pentru Android (aproximări sigure pentru status bar)
 const SAFE_AREA_TOP_PADDING = Platform.OS === 'ios' ? 50 : 30; 
-const ADDITIONAL_SPACE_REQUESTED = 30; // Spațiul suplimentar pentru a muta conținutul în jos
+const ADDITIONAL_SPACE_REQUESTED = 30; 
 const TOTAL_TOP_OFFSET = SAFE_AREA_TOP_PADDING + ADDITIONAL_SPACE_REQUESTED;
 
 // Culoarea principală de accent din tema: #0a7ea4
 const TINT_COLOR = '#0a7ea4';
 
 export default function ProfileScreen() {
+  // NOU: Extragem funcția de signOut
+  const { signOut } = useAuth(); 
+  
   // Preluarea culorilor din sistemul de teme
   const tint = useThemeColor({}, 'tint');
   
   // Setăm culorile explicit la Alb pentru a asigura fundalul deschis
   const white = '#FFFFFF';
-  // MODIFICAT: headerBackground folosește acum culoarea principală de accent
   const headerBackground = TINT_COLOR; 
   
   // Culori de text fixe, închise, pentru a asigura lizibilitatea pe fundal alb
@@ -31,7 +35,6 @@ export default function ProfileScreen() {
   const secondaryTextColor = '#6B7280';
 
   return (
-    // Fundalul principal al ecranului este setat la alb (forțat)
     <ThemedView lightColor={white} darkColor={white} style={styles.container}>
       <ScrollView 
         contentContainerStyle={styles.scrollContainer} 
@@ -44,34 +47,38 @@ export default function ProfileScreen() {
         <ThemedView lightColor={white} darkColor={white} style={styles.profileCard}>
           <Image
             source={{ uri: "https://i.pravatar.cc/150?img=12" }}
-            // Bordura se potrivește cu fundalul cardului care este Alb
             style={[styles.profileImage, { borderColor: white }]}
           />
           
-          {/* Numele (Cosmin) este setat explicit la primaryTextColor (negru) pentru lizibilitate maximă */}
+          {/* Numele (Andrei) este setat explicit la primaryTextColor (negru) pentru lizibilitate maximă */}
           <ThemedText 
             type="title" 
             style={[styles.nameText, { color: primaryTextColor }]}
           >
-            Cosmin
+            Andrei
           </ThemedText>
           
           {/* Textul @handle folosește o culoare secundară (dark gray) */}
-          <ThemedText style={{ color: secondaryTextColor, marginBottom: 10 }}>@hackathon-2025</ThemedText>
+          <ThemedText style={{ color: secondaryTextColor, marginBottom: 10 }}>@andrei_popescu15</ThemedText>
 
           {/* 3. Afișare Oraș - Design simplificat și lizibil */}
           <View style={styles.cityContainer}>
             <Ionicons name="location-sharp" size={16} color={secondaryTextColor} style={{ marginRight: 5 }} />
             <ThemedText style={{ color: secondaryTextColor, fontSize: 16 }}>
-                Oraș: <ThemedText type="defaultSemiBold" style={{ color: primaryTextColor }}>Bucharest</ThemedText>
+                Oraș: <ThemedText type="defaultSemiBold" style={{ color: primaryTextColor }}>Galati</ThemedText>
             </ThemedText>
           </View>
 
           <View style={styles.bioContainer}>
             {/* Textul bio folosește primaryTextColor (negru) pentru lizibilitate */}
             <ThemedText style={[styles.bioText, { color: primaryTextColor }]} >
-              Student pasionat de AI și dezvoltare mobilă. Îmi place să explorez cele mai frumoase locații din România! 🇷🇴
+              Student pasionat de AI și dezvoltare mobilă. Îmi place să explorez cele mai frumoase locații din România! 🇷🇴❤️
             </ThemedText>
+          </View>
+          
+          {/* NOU: Butonul de Logout integrat în profil */}
+          <View style={styles.logoutButton}>
+            <Button title="LOGOUT" onPress={signOut} color="#E74C3C" />
           </View>
           
         </ThemedView>
@@ -90,14 +97,11 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    // Setează padding-ul total pentru a împinge tot conținutul sub notch ȘI pentru a muta vizibil în jos.
     paddingTop: TOTAL_TOP_OFFSET, 
   },
   header: {
     height: 150, 
     position: 'relative',
-    // Header-ul este tras în sus cu valoarea STATUS_BAR_HEIGHT pentru a simula începerea de la marginea de sus a ecranului
-    // DAR tot conținutul din ScrollView este mutat în jos de paddingTop-ul de mai sus (TOTAL_TOP_OFFSET)
     marginTop: -SAFE_AREA_TOP_PADDING, 
   },
   profileCard: {
@@ -144,5 +148,9 @@ const styles = StyleSheet.create({
   },
   bottomSpace: {
     height: 50, 
+  },
+  logoutButton: { 
+    width: '100%', 
+    marginTop: 20,
   }
 });
